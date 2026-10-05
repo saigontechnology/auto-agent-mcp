@@ -9,4 +9,8 @@ describe('extension identity', () => {
     expect(EXTENSION_ID).toBe(expected);
     expect(EXTENSION_ID).toMatch(/^[a-p]{32}$/);
   });
+
+  it('is the Auto Agent extension', () => {
+    expect(EXTENSION_ID).toBe('halobcdjpokedneejfmdjecjgdkejjdk');
+  });
 });

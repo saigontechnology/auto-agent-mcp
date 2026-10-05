@@ -1,18 +1,18 @@
-export const PROTOCOL_VERSION = 2;
-export const APP_ID = 'pickfix';
+export const PROTOCOL_VERSION = 1;
+export const APP_ID = 'auto-agent';
 
-export const PORT_FIRST = 47400;
-export const PORT_LAST = 47409;
+export const PORT_FIRST = 47320;
+export const PORT_LAST = 47329;
 export const PORTS: readonly number[] = Array.from(
   { length: PORT_LAST - PORT_FIRST + 1 },
   (_, i) => PORT_FIRST + i,
 );
-export const WS_PATH = '/pickfix';
+export const WS_PATH = '/auto-agent';
 
 export const MAX_MESSAGE_BYTES = 15 * 1024 * 1024;
 export const MAX_ITEMS_PER_BATCH = 50;
 export const MAX_FLOW_STEPS = 500;
-export const BATCH_SCHEMA = 'pickfix.batch/1';
+export const BATCH_SCHEMA = 'auto-agent.batch/1';
 
 export const LIMITS = {
   anchorText: 500,

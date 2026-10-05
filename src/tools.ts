@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { isAbsolute, resolve } from 'node:path';
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { LIMITS, batchReportSchema, batchSchema, renderBatchMarkdown, type BatchStatus, type Session } from '@pickfix/protocol';
+import { LIMITS, WS_PATH, batchReportSchema, batchSchema, renderBatchMarkdown, type BatchStatus, type Session } from '@pickfix/protocol';
 import type { BatchRecord, QueueStore } from './queue-store.js';
 import { safePath } from './channel.js';
 import { normalizeSourcePath } from './source-paths.js';
@@ -95,7 +95,7 @@ export function registerTools(server: McpServer, getDeps: () => Promise<ToolDeps
         [
           `PickFix session for ${deps.session.name} (${deps.repoRoot})`,
           `Agent: ${deps.session.agent} · session ${deps.session.sessionId}`,
-          link.port ? `Extension link: listening on ws://127.0.0.1:${link.port}/pickfix` : `Extension link: not available. ${link.reason ?? ''}`.trim(),
+          link.port ? `Extension link: listening on ws://127.0.0.1:${link.port}${WS_PATH}` : `Extension link: not available. ${link.reason ?? ''}`.trim(),
           `Batches: ${countText}`,
         ].join('\n'),
       );

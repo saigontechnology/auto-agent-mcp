@@ -14,7 +14,7 @@ type Options = { origin?: string; host?: string; path?: string };
 function open(port: number, options: Options): WebSocket {
   const headers: Record<string, string> = { Origin: options.origin ?? `chrome-extension://${EXTENSION_ID}` };
   if (options.host) headers.Host = options.host;
-  return new WebSocket(`ws://127.0.0.1:${port}${options.path ?? '/pickfix'}`, { headers, maxPayload: 32 * 1024 * 1024 });
+  return new WebSocket(`ws://127.0.0.1:${port}${options.path ?? '/auto-agent'}`, { headers, maxPayload: 32 * 1024 * 1024 });
 }
 
 export function connect(port: number, options: Options = {}): Promise<TestClient> {

@@ -19,7 +19,7 @@ function makeDeps(sessionId: string, home: string, repoRoot: string): ToolDeps {
     store: new QueueStore({ home, repoRoot, log: () => {} }),
     session,
     repoRoot,
-    linkStatus: () => ({ port: 47400 }),
+    linkStatus: () => ({ port: 47320 }),
     onStatusChanged: (id) => changed.push(id),
   };
 }
@@ -50,13 +50,13 @@ it('lists the six tools', async () => {
 it('describes the session and the queue', async () => {
   deps.store.add(makeBatch(), 's');
   const out = text(await call('pickfix_status'));
-  expect(out).toContain('ws://127.0.0.1:47400/pickfix');
+  expect(out).toContain('ws://127.0.0.1:47320/auto-agent');
   expect(out).toContain('1 queued');
 });
 
 it('says why the extension link is down', async () => {
-  deps.linkStatus = () => ({ port: null, reason: 'All ports 47400–47409 are in use by other sessions.' });
-  expect(text(await call('pickfix_status'))).toContain('All ports 47400–47409 are in use');
+  deps.linkStatus = () => ({ port: null, reason: 'All ports 47320–47329 are in use by other sessions.' });
+  expect(text(await call('pickfix_status'))).toContain('All ports 47320–47329 are in use');
 });
 
 describe('pickfix_list_batches', () => {

@@ -36,7 +36,7 @@ export function makeElementItem(id = 'item-1'): Item {
 
 export function makeBatch(overrides: Partial<Batch> = {}): Batch {
   return {
-    schema: 'pickfix.batch/1',
+    schema: 'auto-agent.batch/1',
     id: 'batch-1',
     createdAt: '2026-10-02T10:01:00.000Z',
     page: { url: 'http://localhost:5173/checkout', path: '/checkout', title: 'Checkout' },

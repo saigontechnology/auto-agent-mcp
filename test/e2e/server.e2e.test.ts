@@ -56,7 +56,7 @@ async function startAgent(home: string, repo: string): Promise<Agent> {
   await client.connect(transport);
   agent.pid = transport.pid;
   const status = textOf(await client.callTool({ name: 'pickfix_status', arguments: {} }));
-  const port = Number(/ws:\/\/127\.0\.0\.1:(\d+)\/pickfix/.exec(status)?.[1]);
+  const port = Number(/ws:\/\/127\.0\.0\.1:(\d+)\/auto-agent/.exec(status)?.[1]);
   expect(port).toBeGreaterThan(0);
   agent.port = port;
   return agent;
@@ -74,8 +74,8 @@ async function until<T>(read: () => T | undefined, ms = 5000): Promise<T> {
 
 async function connectedExtension(agent: Agent) {
   const ext = await connect(agent.port, { origin: ORIGIN });
-  expect(await ext.next()).toMatchObject({ type: 'server.info', app: 'pickfix', protocol: 2 });
-  ext.send({ v: 1, type: 'hello', protocol: 2, client: { extensionVersion: '0.1.0', browser: 'e2e' } });
+  expect(await ext.next()).toMatchObject({ type: 'server.info', app: 'auto-agent', protocol: 1 });
+  ext.send({ v: 1, type: 'hello', protocol: 1, client: { extensionVersion: '0.1.0', browser: 'e2e' } });
   expect(await ext.next()).toMatchObject({ type: 'welcome', session: { agent: 'e2e-agent' } });
   return ext;
 }
@@ -116,7 +116,7 @@ describe('pickfix-mcp end to end', () => {
     expect(await rejectedStatus(agent.port, { origin: 'http://evil.test' })).toBe(403);
     const ext = await connect(agent.port, { origin: ORIGIN });
     await ext.next();
-    ext.send({ v: 1, type: 'hello', protocol: 1, token: 'f'.repeat(64), client: { extensionVersion: '0.1.0', browser: 'e2e' } });
+    ext.send({ v: 1, type: 'hello', protocol: 2, client: { extensionVersion: '0.1.0', browser: 'e2e' } });
     expect(await ext.next()).toMatchObject({ type: 'error', code: 'protocol-mismatch' });
   });
 

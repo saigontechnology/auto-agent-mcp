@@ -10,7 +10,7 @@ import { freePorts } from './net-helpers.js';
 import { connect, rejectedStatus, type TestClient } from './ws-client.js';
 
 const session: Session = { sessionId: 'session-a', name: 'shop', cwd: '/Users/dev/shop', startedAt: '2026-10-02T10:00:00Z', agent: 'claude-code', pid: process.pid };
-const hello = () => ({ v: 1, type: 'hello', protocol: 2, client: { extensionVersion: '0.1.0', browser: 'test' } });
+const hello = () => ({ v: 1, type: 'hello', protocol: 1, client: { extensionVersion: '0.1.0', browser: 'test' } });
 
 let bridge: Bridge;
 let store: QueueStore;
@@ -37,7 +37,7 @@ async function start(overrides: { preAuthMs?: number } = {}) {
 
 async function authed(): Promise<TestClient> {
   const client = await connect(bridge.port);
-  expect(await client.next()).toMatchObject({ type: 'server.info', app: 'pickfix', protocol: 2 });
+  expect(await client.next()).toMatchObject({ type: 'server.info', app: 'auto-agent', protocol: 1 });
   client.send(hello());
   expect(await client.next()).toEqual({ v: 1, type: 'welcome', session });
   return client;
@@ -112,10 +112,10 @@ describe('handshake', () => {
     expect(await client.next()).toEqual({ v: 1, type: 'welcome', session });
   });
 
-  it('tells a protocol 1 extension (which still sends a pairing token) to update', async () => {
+  it('tells an extension speaking PickFix protocol 2 to update', async () => {
     const client = await connect(bridge.port);
     await client.next();
-    client.send({ ...hello(), protocol: 1, token: 't'.repeat(64) });
+    client.send({ ...hello(), protocol: 2 });
     expect(await client.next()).toMatchObject({ type: 'error', code: 'protocol-mismatch' });
     expect(await client.closed).toBe(1008);
   });

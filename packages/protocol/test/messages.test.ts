@@ -4,7 +4,7 @@ import { makeBatch } from './fixtures.js';
 
 describe('parseClientMessage', () => {
   it('parses hello', () => {
-    const text = JSON.stringify({ v: 1, type: 'hello', protocol: 2, client: { extensionVersion: '0.1.0', browser: 'Chrome 141' } });
+    const text = JSON.stringify({ v: 1, type: 'hello', protocol: 1, client: { extensionVersion: '0.1.0', browser: 'Chrome 141' } });
     const result = parseClientMessage(text);
     expect(result.ok && result.message.type).toBe('hello');
   });

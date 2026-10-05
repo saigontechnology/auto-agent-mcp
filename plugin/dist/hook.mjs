@@ -19,9 +19,9 @@ import { existsSync, readdirSync } from "node:fs";
 import { join as join2 } from "node:path";
 
 // packages/protocol/src/constants.ts
-var APP_ID = "pickfix";
-var PORT_FIRST = 47400;
-var PORT_LAST = 47409;
+var APP_ID = "auto-agent";
+var PORT_FIRST = 47320;
+var PORT_LAST = 47329;
 var PORTS = Array.from(
   { length: PORT_LAST - PORT_FIRST + 1 },
   (_, i) => PORT_FIRST + i
@@ -29,7 +29,7 @@ var PORTS = Array.from(
 var MAX_MESSAGE_BYTES = 15 * 1024 * 1024;
 var MAX_ITEMS_PER_BATCH = 50;
 var MAX_FLOW_STEPS = 500;
-var BATCH_SCHEMA = "pickfix.batch/1";
+var BATCH_SCHEMA = "auto-agent.batch/1";
 var LIMITS = {
   anchorText: 500,
   anchorHtml: 4e3,

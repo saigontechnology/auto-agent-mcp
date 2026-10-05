@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { basename } from 'node:path';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { PORT_FIRST, PORT_LAST, type Session } from '@pickfix/protocol';
+import { PORT_FIRST, PORT_LAST, WS_PATH, type Session } from '@pickfix/protocol';
 import { startBridge, type Bridge } from './bridge.js';
 import { announce } from './channel.js';
 import { pickfixHome } from './home.js';
@@ -69,7 +69,7 @@ export async function main(): Promise<void> {
     } catch (error) {
       linkProblem = `Could not start the extension link: ${(error as Error).message}`;
     }
-    log(linkProblem ?? `Listening on ws://127.0.0.1:${bridge?.port}/pickfix for ${repoRoot}`);
+    log(linkProblem ?? `Listening on ws://127.0.0.1:${bridge?.port}${WS_PATH} for ${repoRoot}`);
 
     resolveDeps({
       store,

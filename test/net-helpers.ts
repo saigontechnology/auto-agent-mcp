@@ -1,6 +1,6 @@
 import { createServer } from 'node:net';
 
-/** Ports that were free a moment ago, so tests never touch the real 47400–47409 range. */
+/** Ports that were free a moment ago, so tests never touch the real 47320–47329 range. */
 export async function freePorts(count: number): Promise<number[]> {
   const ports: number[] = [];
   for (let i = 0; i < count; i++) {
