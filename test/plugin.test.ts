@@ -36,6 +36,15 @@ describe('plugin packaging', () => {
     expect(json('package.json').version).toBe(SERVER_VERSION);
   });
 
+  it('is a private package, not published to npm', () => {
+    const pkg = json('package.json');
+    expect(pkg.name).toBe('auto-agent-claude-plugin');
+    expect(pkg.private).toBe(true);
+    expect(pkg.bin).toBeUndefined();
+    expect(pkg.files).toBeUndefined();
+    expect(SERVER_VERSION).toBe('0.1.0');
+  });
+
   it('runs the bundled hook on UserPromptSubmit in exec form', () => {
     const hooks = json('plugin/hooks/hooks.json');
     expect(hooks.hooks.UserPromptSubmit[0].hooks[0]).toEqual({
