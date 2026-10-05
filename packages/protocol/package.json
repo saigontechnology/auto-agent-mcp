@@ -1,7 +1,7 @@
 {
-  "name": "@pickfix/protocol",
+  "name": "@auto-agent/protocol",
   "version": "0.2.0",
-  "description": "Wire protocol, schemas and batch markdown shared by the PickFix extension and pickfix-mcp.",
+  "description": "Wire protocol, schemas and batch markdown shared by the Auto Agent extension and its Claude Code plugin.",
   "type": "module",
   "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
   "files": ["dist"],

@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { BatchReport } from '@pickfix/protocol';
+import type { BatchReport } from '@auto-agent/protocol';
 import { describe, expect, it } from 'vitest';
 import { QueueStore, isProcessAlive } from '../src/queue-store.js';
 import { makeBatch } from '../packages/protocol/test/fixtures.js';

@@ -43,7 +43,7 @@ async function startAgent(home: string, repo: string): Promise<Agent> {
     command: process.execPath,
     args: [SERVER],
     cwd: repo,
-    env: { ...(process.env as Record<string, string>), PICKFIX_HOME: home, PICKFIX_EXTENSION_IDS: DEV_ID },
+    env: { ...(process.env as Record<string, string>), AUTO_AGENT_HOME: home, AUTO_AGENT_EXTENSION_IDS: DEV_ID },
     stderr: 'ignore',
   });
   const client = new Client({ name: 'e2e-agent', version: '1.0.0' });
@@ -55,7 +55,7 @@ async function startAgent(home: string, repo: string): Promise<Agent> {
   running.push(agent);
   await client.connect(transport);
   agent.pid = transport.pid;
-  const status = textOf(await client.callTool({ name: 'pickfix_status', arguments: {} }));
+  const status = textOf(await client.callTool({ name: 'auto_agent_status', arguments: {} }));
   const port = Number(/ws:\/\/127\.0\.0\.1:(\d+)\/auto-agent/.exec(status)?.[1]);
   expect(port).toBeGreaterThan(0);
   agent.port = port;
@@ -80,7 +80,7 @@ async function connectedExtension(agent: Agent) {
   return ext;
 }
 
-describe('pickfix-mcp end to end', () => {
+describe('auto-agent plugin end to end', () => {
   it('connects, receives a batch, announces it, and streams claim and report back', async () => {
     const home = tempHome();
     const repo = realpathSync(tempDir());
@@ -93,15 +93,15 @@ describe('pickfix-mcp end to end', () => {
     const event = await until(() => agent.notifications.find((n) => n.method === 'notifications/claude/channel'));
     expect(event.params).toMatchObject({ meta: { batch_id: 'batch-1', items: '1', path: '/checkout' } });
 
-    const claim = (await agent.client.callTool({ name: 'pickfix_claim_batch', arguments: { batchId: 'batch-1' } })) as {
+    const claim = (await agent.client.callTool({ name: 'auto_agent_claim_batch', arguments: { batchId: 'batch-1' } })) as {
       content: { type: string }[];
     };
-    expect(textOf(claim)).toContain('# PickFix batch batch-1');
+    expect(textOf(claim)).toContain('# Auto Agent batch batch-1');
     expect(claim.content.some((c) => c.type === 'image')).toBe(true);
     expect(await ext.next()).toMatchObject({ type: 'batch.status', batchId: 'batch-1', status: 'working' });
 
     await agent.client.callTool({
-      name: 'pickfix_report',
+      name: 'auto_agent_report',
       arguments: { batchId: 'batch-1', outcome: 'done', summary: 'Made the button full-width in CheckoutSummary.tsx.', items: [{ itemId: 'item-1', outcome: 'done' }] },
     });
     expect(await ext.next()).toMatchObject({
@@ -129,7 +129,7 @@ describe('pickfix-mcp end to end', () => {
     await ext.next();
     const second = await startAgent(home, repo);
     expect(second.port).not.toBe(first.port);
-    expect(textOf(await second.client.callTool({ name: 'pickfix_list_batches', arguments: {} }))).toContain('batch-1 · queued');
+    expect(textOf(await second.client.callTool({ name: 'auto_agent_list_batches', arguments: {} }))).toContain('batch-1 · queued');
   });
 
   it('re-queues a batch whose session died mid-fix and announces it to the next session', async () => {
@@ -139,8 +139,8 @@ describe('pickfix-mcp end to end', () => {
     const ext = await connectedExtension(first);
     ext.send({ v: 1, type: 'batch.submit', requestId: 'r1', batch: makeBatch() });
     await ext.next();
-    const claimed = await first.client.callTool({ name: 'pickfix_claim_batch', arguments: {} });
-    expect(textOf(claimed)).toContain('# PickFix batch batch-1');
+    const claimed = await first.client.callTool({ name: 'auto_agent_claim_batch', arguments: {} });
+    expect(textOf(claimed)).toContain('# Auto Agent batch batch-1');
     expect(await ext.next()).toMatchObject({ type: 'batch.status', batchId: 'batch-1', status: 'working' });
     const pid = first.pid;
     expect(pid).toBeGreaterThan(0);
@@ -149,7 +149,7 @@ describe('pickfix-mcp end to end', () => {
     await until(() => (alive(pid!) ? undefined : true), 5000);
 
     const next = await startAgent(home, repo);
-    expect(textOf(await next.client.callTool({ name: 'pickfix_list_batches', arguments: {} }))).toContain('batch-1 · queued');
+    expect(textOf(await next.client.callTool({ name: 'auto_agent_list_batches', arguments: {} }))).toContain('batch-1 · queued');
     await until(() => next.notifications.find((n) => (n.params?.meta as { batch_id?: string } | undefined)?.batch_id === 'batch-1'));
   });
 
@@ -157,6 +157,6 @@ describe('pickfix-mcp end to end', () => {
     const repo = realpathSync(tempDir());
     writeFileSync(join(repo, 'export.json'), JSON.stringify(makeBatch({ id: 'exported' })));
     const agent = await startAgent(tempHome(), repo);
-    expect(textOf(await agent.client.callTool({ name: 'pickfix_import', arguments: { path: 'export.json' } }))).toContain('Imported batch exported');
+    expect(textOf(await agent.client.callTool({ name: 'auto_agent_import', arguments: { path: 'export.json' } }))).toContain('Imported batch exported');
   });
 });

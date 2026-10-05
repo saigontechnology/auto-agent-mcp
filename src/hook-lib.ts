@@ -1,6 +1,6 @@
 import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { ID_PATTERN } from '@pickfix/protocol';
+import { ID_PATTERN } from '@auto-agent/protocol';
 import { readJson } from './fs-json.js';
 import { repoKey } from './repo.js';
 
@@ -23,7 +23,7 @@ export function hookOutput(count: number): string | null {
   return JSON.stringify({
     hookSpecificOutput: {
       hookEventName: 'UserPromptSubmit',
-      additionalContext: `PickFix: ${what} waiting for this repository. Run /pickfix:fix to handle ${it}, or ignore this if the user is asking about something else.`,
+      additionalContext: `Auto Agent: ${what} waiting for this repository. Run /auto-agent:fix to handle ${it}, or ignore this if the user is asking about something else.`,
     },
   });
 }

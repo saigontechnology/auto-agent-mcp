@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, statSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { ID_PATTERN, type Batch, type BatchReport, type BatchStatus, type Item, type Screenshot } from '@pickfix/protocol';
+import { ID_PATTERN, type Batch, type BatchReport, type BatchStatus, type Item, type Screenshot } from '@auto-agent/protocol';
 import { readJson, writeJson } from './fs-json.js';
 import { ensureHome } from './home.js';
 import { log as defaultLog } from './log.js';

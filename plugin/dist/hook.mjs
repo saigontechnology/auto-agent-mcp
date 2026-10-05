@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { createRequire as __pickfixCreateRequire } from 'node:module';
-const require = __pickfixCreateRequire(import.meta.url);
+import { createRequire as __autoAgentCreateRequire } from 'node:module';
+const require = __autoAgentCreateRequire(import.meta.url);
 var __defProp = Object.defineProperty;
 var __export = (target, all) => {
   for (var name in all)
@@ -10,8 +10,8 @@ var __export = (target, all) => {
 // src/home.ts
 import { homedir } from "node:os";
 import { join } from "node:path";
-function pickfixHome(env = process.env) {
-  return env.PICKFIX_HOME ?? join(homedir(), ".pickfix");
+function autoAgentHome(env = process.env) {
+  return env.AUTO_AGENT_HOME ?? join(homedir(), ".auto-agent");
 }
 
 // src/hook-lib.ts
@@ -19895,7 +19895,7 @@ import { readFileSync, renameSync, writeFileSync } from "node:fs";
 
 // src/log.ts
 function log(message) {
-  process.stderr.write(`[pickfix] ${message}
+  process.stderr.write(`[auto-agent] ${message}
 `);
 }
 
@@ -19965,7 +19965,7 @@ function hookOutput(count) {
   return JSON.stringify({
     hookSpecificOutput: {
       hookEventName: "UserPromptSubmit",
-      additionalContext: `PickFix: ${what} waiting for this repository. Run /pickfix:fix to handle ${it}, or ignore this if the user is asking about something else.`
+      additionalContext: `Auto Agent: ${what} waiting for this repository. Run /auto-agent:fix to handle ${it}, or ignore this if the user is asking about something else.`
     }
   });
 }
@@ -19980,7 +19980,7 @@ async function readStdin() {
 try {
   const input2 = JSON.parse(await readStdin() || "{}");
   const root = resolveRepoRoot({ env: process.env, cwd: input2.cwd });
-  const output2 = hookOutput(queuedCount(pickfixHome(), root));
+  const output2 = hookOutput(queuedCount(autoAgentHome(), root));
   if (output2) process.stdout.write(output2);
 } catch {
 } finally {

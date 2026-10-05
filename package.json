@@ -1,7 +1,7 @@
 {
-  "name": "pickfix-mcp",
+  "name": "auto-agent-mcp",
   "version": "1.1.0",
-  "description": "Local MCP server that receives UI feedback from the PickFix browser extension and hands it to your coding agent.",
+  "description": "Local MCP server that receives UI feedback from the Auto Agent browser extension and hands it to your coding agent.",
   "license": "MIT",
   "keywords": [
     "mcp",
@@ -11,17 +11,17 @@
     "browser-extension"
   ],
   "author": "ledutu <ledutu.it@gmail.com>",
-  "homepage": "https://github.com/ledutu-studio/pickfix-mcp#readme",
+  "homepage": "https://github.com/ledutu-studio/auto-agent-mcp#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ledutu-studio/pickfix-mcp.git"
+    "url": "git+https://github.com/ledutu-studio/auto-agent-mcp.git"
   },
   "bugs": {
-    "url": "https://github.com/ledutu-studio/pickfix-mcp/issues"
+    "url": "https://github.com/ledutu-studio/auto-agent-mcp/issues"
   },
   "type": "module",
   "bin": {
-    "pickfix-mcp": "plugin/dist/server.mjs"
+    "auto-agent-mcp": "plugin/dist/server.mjs"
   },
   "files": [
     "plugin/dist",
@@ -37,11 +37,11 @@
     "build": "node scripts/bundle.mjs",
     "test": "vitest run",
     "test:e2e": "node scripts/bundle.mjs && vitest run --config vitest.e2e.config.ts",
-    "compile": "tsc --noEmit && pnpm --filter @pickfix/protocol compile"
+    "compile": "tsc --noEmit && pnpm --filter @auto-agent/protocol compile"
   },
   "devDependencies": {
     "@modelcontextprotocol/sdk": "1.31.0",
-    "@pickfix/protocol": "workspace:*",
+    "@auto-agent/protocol": "workspace:*",
     "@types/node": "^22.20.4",
     "@types/ws": "^8.18.2",
     "esbuild": "^0.28.2",

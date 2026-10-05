@@ -5,7 +5,7 @@ import { SERVER_INSTRUCTIONS, registerPrompts } from '../src/prompts.js';
 import { registerTools, type ToolDeps } from '../src/tools.js';
 
 export async function startMcp(deps: ToolDeps): Promise<{ client: Client; close(): Promise<void> }> {
-  const server = new McpServer({ name: 'pickfix', version: '0.1.0' }, { instructions: SERVER_INSTRUCTIONS });
+  const server = new McpServer({ name: 'auto-agent', version: '0.1.0' }, { instructions: SERVER_INSTRUCTIONS });
   registerTools(server, async () => deps);
   registerPrompts(server);
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();

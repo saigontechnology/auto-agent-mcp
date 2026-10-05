@@ -31,7 +31,7 @@ describe('renderBatchMarkdown', () => {
 
   it('starts with a header naming the batch, page and repository', () => {
     const md = renderBatchMarkdown(makeBatch(), { repoRoot: '/Users/dev/shop' });
-    expect(md).toContain('# PickFix batch batch-1 — 1 item');
+    expect(md).toContain('# Auto Agent batch batch-1 — 1 item');
     expect(md).toContain('- Page: http://localhost:5173/checkout');
     expect(md).toContain('- Viewport: 1440×900 @2x');
     expect(md).toContain('- Repository: /Users/dev/shop');
@@ -135,6 +135,6 @@ describe('renderBatchMarkdown', () => {
   });
 
   it('ends with the reporting instruction', () => {
-    expect(renderBatchMarkdown(makeBatch()).trimEnd().endsWith('call pickfix_report with the outcome for each item.')).toBe(true);
+    expect(renderBatchMarkdown(makeBatch()).trimEnd().endsWith('call auto_agent_report with the outcome for each item.')).toBe(true);
   });
 });

@@ -1,8 +1,8 @@
 import type { IncomingHttpHeaders } from 'node:http';
-import { EXTENSION_ID, WS_PATH } from '@pickfix/protocol';
+import { EXTENSION_ID, WS_PATH } from '@auto-agent/protocol';
 
 export function allowedOrigins(env: NodeJS.ProcessEnv = process.env): Set<string> {
-  const extra = (env.PICKFIX_EXTENSION_IDS ?? '')
+  const extra = (env.AUTO_AGENT_EXTENSION_IDS ?? '')
     .split(',')
     .map((id) => id.trim())
     .filter(Boolean);
@@ -21,7 +21,7 @@ export function checkUpgrade(
     return { ok: false, status: 403, reason: 'Host is not a loopback address of this server.' };
   }
   const origin = req.headers.origin;
-  if (!origin || !origins.has(origin)) return { ok: false, status: 403, reason: 'Origin is not the PickFix extension.' };
+  if (!origin || !origins.has(origin)) return { ok: false, status: 403, reason: 'Origin is not the Auto Agent extension.' };
   return { ok: true };
 }
 

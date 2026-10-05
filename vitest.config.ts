@@ -4,7 +4,7 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   resolve: {
     alias: {
-      '@pickfix/protocol': fileURLToPath(new URL('./packages/protocol/src/index.ts', import.meta.url)),
+      '@auto-agent/protocol': fileURLToPath(new URL('./packages/protocol/src/index.ts', import.meta.url)),
     },
   },
   test: {

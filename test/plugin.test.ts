@@ -19,16 +19,16 @@ function skill(path: string): { fields: Record<string, string>; body: string } {
 describe('plugin packaging', () => {
   it('declares one marketplace with the plugin in ./plugin', () => {
     const marketplace = json('.claude-plugin/marketplace.json');
-    expect(marketplace.name).toBe('pickfix');
+    expect(marketplace.name).toBe('auto-agent');
     expect(marketplace.owner.name).toBeTruthy();
-    expect(marketplace.plugins).toEqual([expect.objectContaining({ name: 'pickfix', source: './plugin' })]);
+    expect(marketplace.plugins).toEqual([expect.objectContaining({ name: 'auto-agent', source: './plugin' })]);
   });
 
   it('runs the bundled server and binds the channel to it', () => {
     const plugin = json('plugin/.claude-plugin/plugin.json');
-    expect(plugin.name).toBe('pickfix');
-    expect(plugin.mcpServers.pickfix).toEqual({ command: 'node', args: ['${CLAUDE_PLUGIN_ROOT}/dist/server.mjs'] });
-    expect(plugin.channels).toEqual([{ server: 'pickfix', displayName: 'PickFix' }]);
+    expect(plugin.name).toBe('auto-agent');
+    expect(plugin.mcpServers['auto-agent']).toEqual({ command: 'node', args: ['${CLAUDE_PLUGIN_ROOT}/dist/server.mjs'] });
+    expect(plugin.channels).toEqual([{ server: 'auto-agent', displayName: 'Auto Agent' }]);
   });
 
   it('keeps every version in step', () => {

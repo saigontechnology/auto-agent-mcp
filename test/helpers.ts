@@ -9,12 +9,12 @@ afterAll(() => {
 });
 
 /** A fresh directory under the OS temp dir, deleted when the test file finishes. */
-export function tempDir(prefix = 'pickfix-'): string {
+export function tempDir(prefix = 'auto-agent-'): string {
   const dir = mkdtempSync(join(tmpdir(), prefix));
   created.push(dir);
   return dir;
 }
 
 export function tempHome(): string {
-  return join(tempDir(), '.pickfix');
+  return join(tempDir(), '.auto-agent');
 }

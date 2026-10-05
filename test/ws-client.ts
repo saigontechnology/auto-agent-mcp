@@ -1,5 +1,5 @@
 import WebSocket from 'ws';
-import { EXTENSION_ID, parseServerMessage, type ServerMessage } from '@pickfix/protocol';
+import { EXTENSION_ID, parseServerMessage, type ServerMessage } from '@auto-agent/protocol';
 
 export type TestClient = {
   ws: WebSocket;

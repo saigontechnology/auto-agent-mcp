@@ -1,4 +1,4 @@
-import { pickfixHome } from './home.js';
+import { autoAgentHome } from './home.js';
 import { hookOutput, queuedCount } from './hook-lib.js';
 import { resolveRepoRoot } from './repo.js';
 
@@ -14,7 +14,7 @@ async function readStdin(): Promise<string> {
 try {
   const input = JSON.parse((await readStdin()) || '{}') as { cwd?: string };
   const root = resolveRepoRoot({ env: process.env, cwd: input.cwd });
-  const output = hookOutput(queuedCount(pickfixHome(), root));
+  const output = hookOutput(queuedCount(autoAgentHome(), root));
   if (output) process.stdout.write(output);
 } catch {
   // Silent by design.

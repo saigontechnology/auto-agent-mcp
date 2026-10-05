@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { EXTENSION_ID } from '@pickfix/protocol';
+import { EXTENSION_ID } from '@auto-agent/protocol';
 import { WindowCounter, allowedOrigins, checkUpgrade } from '../src/ws-guard.js';
 
-const origins = allowedOrigins({ PICKFIX_EXTENSION_IDS: 'devid1, devid2' });
+const origins = allowedOrigins({ AUTO_AGENT_EXTENSION_IDS: 'devid1, devid2' });
 const req = (headers: Record<string, string>, url = '/auto-agent') => ({ url, headers });
 
 describe('allowedOrigins', () => {

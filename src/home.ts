@@ -2,8 +2,8 @@ import { chmodSync, mkdirSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
-export function pickfixHome(env: NodeJS.ProcessEnv = process.env): string {
-  return env.PICKFIX_HOME ?? join(homedir(), '.pickfix');
+export function autoAgentHome(env: NodeJS.ProcessEnv = process.env): string {
+  return env.AUTO_AGENT_HOME ?? join(homedir(), '.auto-agent');
 }
 
 export function ensureHome(home: string): void {

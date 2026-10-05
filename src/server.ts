@@ -2,10 +2,10 @@ import { randomUUID } from 'node:crypto';
 import { basename } from 'node:path';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { PORT_FIRST, PORT_LAST, WS_PATH, type Session } from '@pickfix/protocol';
+import { PORT_FIRST, PORT_LAST, WS_PATH, type Session } from '@auto-agent/protocol';
 import { startBridge, type Bridge } from './bridge.js';
 import { announce } from './channel.js';
-import { pickfixHome } from './home.js';
+import { autoAgentHome } from './home.js';
 import { log } from './log.js';
 import { SERVER_INSTRUCTIONS, registerPrompts } from './prompts.js';
 import { QueueStore } from './queue-store.js';
@@ -15,11 +15,11 @@ import { SERVER_VERSION } from './version.js';
 import { allowedOrigins } from './ws-guard.js';
 
 export async function main(): Promise<void> {
-  const home = pickfixHome();
+  const home = autoAgentHome();
   let linkProblem: string | undefined;
 
   const mcp = new McpServer(
-    { name: 'pickfix', version: SERVER_VERSION },
+    { name: 'auto-agent', version: SERVER_VERSION },
     { capabilities: { experimental: { 'claude/channel': {} } }, instructions: SERVER_INSTRUCTIONS },
   );
   let resolveDeps!: (deps: ToolDeps) => void;
@@ -101,7 +101,7 @@ export async function main(): Promise<void> {
   mcp.server.oninitialized = () => {
     setUp().catch((error) => {
       log(`Start-up failed: ${(error as Error).stack ?? String(error)}`);
-      rejectDeps(new Error(`PickFix could not start: ${(error as Error).message ?? String(error)}`));
+      rejectDeps(new Error(`Auto Agent could not start: ${(error as Error).message ?? String(error)}`));
     });
   };
   mcp.server.onclose = shutdown;

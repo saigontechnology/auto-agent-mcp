@@ -136,7 +136,7 @@ function renderItem(item: RenderableItem, index: number, total: number, options:
 
 export function renderBatchMarkdown(batch: RenderableBatch, options: RenderOptions = {}): string {
   const header = [
-    `# PickFix batch ${batch.id} — ${plural(batch.items.length, 'item')}`,
+    `# Auto Agent batch ${batch.id} — ${plural(batch.items.length, 'item')}`,
     '',
     `- Page: ${inline(batch.page.url, 500)}`,
     `- Route: ${inline(batch.page.path, 300)}`,
@@ -145,6 +145,6 @@ export function renderBatchMarkdown(batch: RenderableBatch, options: RenderOptio
   ];
   if (options.repoRoot) header.push(`- Repository: ${options.repoRoot}`);
   const items = batch.items.map((item, i) => renderItem(item, i, batch.items.length, options));
-  const footer = 'When you have finished, call pickfix_report with the outcome for each item.';
+  const footer = 'When you have finished, call auto_agent_report with the outcome for each item.';
   return `${[header.join('\n'), ...items, footer].join('\n\n')}\n`.replace(LONE_SURROGATE, '\uFFFD');
 }

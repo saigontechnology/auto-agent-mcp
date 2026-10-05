@@ -1,12 +1,12 @@
 {
-  "name": "pickfix",
-  "owner": { "name": "ledutu" },
-  "description": "PickFix: send UI feedback from the browser straight to your coding agent.",
+  "name": "auto-agent",
+  "owner": { "name": "Saigon Technology" },
+  "description": "Auto Agent: send UI feedback from the browser straight to Claude Code.",
   "plugins": [
     {
-      "name": "pickfix",
+      "name": "auto-agent",
       "source": "./plugin",
-      "description": "Receive UI feedback from the PickFix browser extension and fix it in this session."
+      "description": "Receive UI feedback from the Auto Agent browser extension and fix it in this session."
     }
   ]
 }

@@ -28,7 +28,7 @@ describe('batchSchema', () => {
   });
 
   it('refuses a wrong schema tag', () => {
-    expect(batchSchema.safeParse({ ...makeBatch(), schema: 'pickfix.batch/2' }).success).toBe(false);
+    expect(batchSchema.safeParse({ ...makeBatch(), schema: 'auto-agent.batch/2' }).success).toBe(false);
   });
 });
 

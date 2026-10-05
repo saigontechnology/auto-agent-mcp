@@ -1,6 +1,6 @@
 import net from 'node:net';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { MAX_MESSAGE_BYTES, type Session } from '@pickfix/protocol';
+import { MAX_MESSAGE_BYTES, type Session } from '@auto-agent/protocol';
 import { startBridge, type Bridge } from '../src/bridge.js';
 import { QueueStore, type BatchRecord } from '../src/queue-store.js';
 import { allowedOrigins } from '../src/ws-guard.js';
@@ -63,7 +63,7 @@ describe('connection guard', () => {
   });
 
   it('answers plain HTTP with 404 and no CORS headers', async () => {
-    const res = await fetch(`http://127.0.0.1:${bridge.port}/pickfix`);
+    const res = await fetch(`http://127.0.0.1:${bridge.port}/auto-agent`);
     expect(res.status).toBe(404);
     expect(res.headers.get('access-control-allow-origin')).toBeNull();
   });
@@ -75,7 +75,7 @@ describe('connection guard resilience', () => {
     await new Promise<void>((resolve) => socket.once('connect', resolve));
     socket.on('error', () => {});
     socket.write(
-      `GET /pickfix HTTP/1.1\r\nHost: 127.0.0.1:${bridge.port}\r\nOrigin: http://evil.test\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-WebSocket-Version: 13\r\n\r\n`,
+      `GET /auto-agent HTTP/1.1\r\nHost: 127.0.0.1:${bridge.port}\r\nOrigin: http://evil.test\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-WebSocket-Version: 13\r\n\r\n`,
     );
     await new Promise((r) => setTimeout(r, 10));
     socket.resetAndDestroy();

@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { isAbsolute, resolve } from 'node:path';
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { LIMITS, WS_PATH, batchReportSchema, batchSchema, renderBatchMarkdown, type BatchStatus, type Session } from '@pickfix/protocol';
+import { LIMITS, WS_PATH, batchReportSchema, batchSchema, renderBatchMarkdown, type BatchStatus, type Session } from '@auto-agent/protocol';
 import type { BatchRecord, QueueStore } from './queue-store.js';
 import { safePath } from './channel.js';
 import { normalizeSourcePath } from './source-paths.js';
@@ -79,10 +79,10 @@ function claimMarkdown(deps: ToolDeps, record: BatchRecord): ToolResult {
 
 export function registerTools(server: McpServer, getDeps: () => Promise<ToolDeps>): void {
   server.registerTool(
-    'pickfix_status',
+    'auto_agent_status',
     {
-      title: 'PickFix status',
-      description: 'Show this session\'s PickFix link: repository, WebSocket port (or why there is none), and how many feedback batches are in each state.',
+      title: 'Auto Agent status',
+      description: 'Show this session\'s Auto Agent link: repository, WebSocket port (or why there is none), and how many feedback batches are in each state.',
       annotations: { readOnlyHint: true },
     },
     async () => {
@@ -93,7 +93,7 @@ export function registerTools(server: McpServer, getDeps: () => Promise<ToolDeps
       const countText = counts.size === 0 ? 'none' : [...counts].map(([status, n]) => `${n} ${status}`).join(', ');
       return ok(
         [
-          `PickFix session for ${deps.session.name} (${deps.repoRoot})`,
+          `Auto Agent session for ${deps.session.name} (${deps.repoRoot})`,
           `Agent: ${deps.session.agent} · session ${deps.session.sessionId}`,
           link.port ? `Extension link: listening on ws://127.0.0.1:${link.port}${WS_PATH}` : `Extension link: not available. ${link.reason ?? ''}`.trim(),
           `Batches: ${countText}`,
@@ -103,10 +103,10 @@ export function registerTools(server: McpServer, getDeps: () => Promise<ToolDeps
   );
 
   server.registerTool(
-    'pickfix_list_batches',
+    'auto_agent_list_batches',
     {
-      title: 'List PickFix batches',
-      description: 'List the feedback batches the PickFix extension sent for this repository. By default shows queued and working batches.',
+      title: 'List Auto Agent batches',
+      description: 'List the feedback batches the Auto Agent extension sent for this repository. By default shows queued and working batches.',
       inputSchema: {
         status: z.enum(['queued', 'working', 'done', 'partial', 'failed', 'cancelled']).optional().describe('Only list batches in this state.'),
       },
@@ -116,7 +116,7 @@ export function registerTools(server: McpServer, getDeps: () => Promise<ToolDeps
       const deps = await getDeps();
       const statuses: BatchStatus[] = status ? [status] : ['queued', 'working'];
       const batches = deps.store.list(statuses);
-      if (batches.length === 0) return ok(`No PickFix batches with status ${statuses.join(' or ')} in this repository.`);
+      if (batches.length === 0) return ok(`No Auto Agent batches with status ${statuses.join(' or ')} in this repository.`);
       return ok(
         batches
           .map((b) => `- ${b.id} · ${b.status} · ${plural(b.items, 'item')} · ${safePath(b.path)} on ${b.origin} · received ${b.receivedAt}`)
@@ -126,12 +126,12 @@ export function registerTools(server: McpServer, getDeps: () => Promise<ToolDeps
   );
 
   server.registerTool(
-    'pickfix_claim_batch',
+    'auto_agent_claim_batch',
     {
-      title: 'Claim a PickFix batch',
+      title: 'Claim a Auto Agent batch',
       description:
         'Claim a feedback batch before changing any code for it, and receive its items: the reviewer\'s requests, where each element lives in the code, and screenshots. Without batchId, claims the oldest queued batch. A batch can be claimed only once across all sessions.',
-      inputSchema: { batchId: z.string().optional().describe('The batch id from the channel event or pickfix_list_batches.') },
+      inputSchema: { batchId: z.string().optional().describe('The batch id from the channel event or auto_agent_list_batches.') },
     },
     async ({ batchId }) => {
       const deps = await getDeps();
@@ -140,8 +140,8 @@ export function registerTools(server: McpServer, getDeps: () => Promise<ToolDeps
         const id = batchId ?? '';
         const holder = batchId ? deps.store.owner(batchId)?.sessionId : undefined;
         const reasons = {
-          'none-queued': 'No queued PickFix batches in this repository.',
-          'not-found': `No batch "${id}" in this repository. Call pickfix_list_batches to see the available ids.`,
+          'none-queued': 'No queued Auto Agent batches in this repository.',
+          'not-found': `No batch "${id}" in this repository. Call auto_agent_list_batches to see the available ids.`,
           'already-claimed': `Batch ${id} is being handled by another session${holder ? ` (${holder})` : ''}. Do not work on it.`,
           cancelled: `Batch ${id} was cancelled by the reviewer. Do not work on it.`,
           finished: `Batch ${id} is already finished.`,
@@ -154,9 +154,9 @@ export function registerTools(server: McpServer, getDeps: () => Promise<ToolDeps
   );
 
   server.registerTool(
-    'pickfix_report',
+    'auto_agent_report',
     {
-      title: 'Report a PickFix batch',
+      title: 'Report a Auto Agent batch',
       description:
         'Report the outcome of a batch you claimed. Always call this when you finish, including when you could only partly fix it or not at all; the reviewer sees the summary in the extension.',
       inputSchema: {
@@ -180,7 +180,7 @@ export function registerTools(server: McpServer, getDeps: () => Promise<ToolDeps
       if (!result.ok) {
         const reasons = {
           'not-found': `No batch "${batchId}" in this repository.`,
-          'not-claimed': `Batch ${batchId} has not been claimed. Call pickfix_claim_batch first.`,
+          'not-claimed': `Batch ${batchId} has not been claimed. Call auto_agent_claim_batch first.`,
           'claimed-by-other': `Batch ${batchId} was claimed by another session; only that session can report it.`,
           'already-reported': `Batch ${batchId} has already been reported.`,
         } as const;
@@ -192,10 +192,10 @@ export function registerTools(server: McpServer, getDeps: () => Promise<ToolDeps
   );
 
   server.registerTool(
-    'pickfix_import',
+    'auto_agent_import',
     {
-      title: 'Import a PickFix export',
-      description: 'Add a batch exported from the PickFix extension as a JSON file to this repository\'s queue, then claim it with pickfix_claim_batch.',
+      title: 'Import a Auto Agent export',
+      description: 'Add a batch exported from the Auto Agent extension as a JSON file to this repository\'s queue, then claim it with auto_agent_claim_batch.',
       inputSchema: { path: z.string().describe('Path to the exported .json file, absolute or relative to the repository root.') },
     },
     async ({ path }) => {
@@ -208,10 +208,10 @@ export function registerTools(server: McpServer, getDeps: () => Promise<ToolDeps
         return error(`Could not read ${file}: ${(e as Error).message}`);
       }
       const parsed = batchSchema.safeParse(data);
-      if (!parsed.success) return error(`${file} is not a PickFix batch export. ${z.prettifyError(parsed.error).slice(0, 800)}`);
+      if (!parsed.success) return error(`${file} is not a Auto Agent batch export. ${z.prettifyError(parsed.error).slice(0, 800)}`);
       const { record, created } = deps.store.add(parsed.data, deps.session.sessionId);
       if (!created) return ok(`Batch ${record.batch.id} is already in the queue (status: ${record.state.status}).`);
-      return ok(`Imported batch ${record.batch.id} with ${plural(record.batch.items.length, 'item')}. Claim it with pickfix_claim_batch.`);
+      return ok(`Imported batch ${record.batch.id} with ${plural(record.batch.items.length, 'item')}. Claim it with auto_agent_claim_batch.`);
     },
   );
 }
