@@ -1,9 +1,9 @@
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
-import { QueueStore } from '../src/queue-store.js';
+import { QueueStore, safeAttachmentName } from '../src/queue-store.js';
 import * as fsJson from '../src/fs-json.js';
-import { makeBatch, makeElementItem, PNG_1PX } from '../packages/protocol/test/fixtures.js';
+import { makeBatch, makeElementItem, PNG_1PX, makeFileItem, makeAttachment, HELLO_B64 } from '../packages/protocol/test/fixtures.js';
 import { tempDir, tempHome } from './helpers.js';
 
 vi.mock('../src/fs-json.js', async (importOriginal) => {
@@ -143,5 +143,41 @@ describe('QueueStore screenshots', () => {
     const item = record.batch.items[0]!;
     expect(store.screenshotBase64('batch-1', item)).toBe(PNG_1PX);
     expect(existsSync(store.screenshotPath('batch-1', item)!)).toBe(true);
+  });
+});
+
+describe('QueueStore attachments', () => {
+  it('writes each file under attachments/ and keeps the data out of batch.json', () => {
+    const { store } = newStore();
+    const { record } = store.add(makeBatch({ items: [makeFileItem()] }), 's');
+    const stored = record.batch.items[0]!.attachments![0]!;
+    expect(stored).toEqual({ id: 'att-1', name: 'notes.md', mime: 'text/markdown', size: 5, file: 'attachments/file-1-1-notes.md' });
+    expect(readFileSync(store.attachmentPath('batch-1', stored)!).toString('base64')).toBe(HELLO_B64);
+    const json = readFileSync(join(store.dir, 'batch-1', 'batch.json'), 'utf8');
+    expect(json).not.toContain(HELLO_B64);
+  });
+
+  it('keeps two files with the same name apart', () => {
+    const { store } = newStore();
+    const item = makeFileItem('file-1', [makeAttachment({ id: 'a1' }), makeAttachment({ id: 'a2' })]);
+    const { record } = store.add(makeBatch({ items: [item] }), 's');
+    const files = record.batch.items[0]!.attachments!.map((a) => a.file);
+    expect(files).toEqual(['attachments/file-1-1-notes.md', 'attachments/file-1-2-notes.md']);
+    for (const a of record.batch.items[0]!.attachments!) expect(existsSync(store.attachmentPath('batch-1', a)!)).toBe(true);
+  });
+
+  it('stores a hostile name inside the batch directory with its extension', () => {
+    const { store } = newStore();
+    const item = makeFileItem('file-1', [makeAttachment({ name: '../../etc/passwd.md' })]);
+    const { record } = store.add(makeBatch({ items: [item] }), 's');
+    const file = record.batch.items[0]!.attachments![0]!.file;
+    expect(file).toBe('attachments/file-1-1-.._.._etc_passwd.md');
+    expect(store.attachmentPath('batch-1', record.batch.items[0]!.attachments![0]!)!.startsWith(join(store.dir, 'batch-1', 'attachments'))).toBe(true);
+  });
+
+  it('makes safe names', () => {
+    expect(safeAttachmentName('báo giá Q4.xlsx')).toBe('b_o_gi__Q4.xlsx');
+    expect(safeAttachmentName(`${'x'.repeat(300)}.pdf`)).toHaveLength(100);
+    expect(safeAttachmentName(`${'x'.repeat(300)}.pdf`).endsWith('.pdf')).toBe(true);
   });
 });

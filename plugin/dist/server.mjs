@@ -41013,6 +41013,14 @@ function originOf(url2) {
     return "";
   }
 }
+var ATTACHMENTS_DIR = "attachments";
+function safeAttachmentName(name) {
+  const safe = name.replace(/[^A-Za-z0-9._-]/g, "_");
+  if (safe.length <= 100) return safe;
+  const dot = safe.lastIndexOf(".");
+  const ext = dot > 0 && safe.length - dot <= 10 ? safe.slice(dot) : "";
+  return safe.slice(0, 100 - ext.length) + ext;
+}
 var FINISHED = ["done", "partial", "failed", "cancelled"];
 var WEEK_MS = 7 * 24 * 3600 * 1e3;
 function isProcessAlive(pid) {
@@ -41093,11 +41101,23 @@ var QueueStore = class {
     try {
       mkdirSync2(tmp, { mode: 448 });
       const items = batch.items.map((item) => {
-        if (!item.screenshot) return item;
-        const { data, ...meta3 } = item.screenshot;
-        const file2 = `${item.id}.${meta3.mime === "image/png" ? "png" : "jpg"}`;
-        writeFileSync2(join2(tmp, file2), Buffer.from(data, "base64"), { mode: 384 });
-        return { ...item, screenshot: { ...meta3, file: file2 } };
+        const { screenshot, attachments, ...rest } = item;
+        const stored2 = { ...rest };
+        if (screenshot) {
+          const { data, ...meta3 } = screenshot;
+          const file2 = `${item.id}.${meta3.mime === "image/png" ? "png" : "jpg"}`;
+          writeFileSync2(join2(tmp, file2), Buffer.from(data, "base64"), { mode: 384 });
+          stored2.screenshot = { ...meta3, file: file2 };
+        }
+        if (attachments?.length) {
+          mkdirSync2(join2(tmp, ATTACHMENTS_DIR), { recursive: true, mode: 448 });
+          stored2.attachments = attachments.map(({ data, ...meta3 }, i) => {
+            const file2 = `${ATTACHMENTS_DIR}/${item.id}-${i + 1}-${safeAttachmentName(meta3.name)}`;
+            writeFileSync2(join2(tmp, file2), Buffer.from(data, "base64"), { mode: 384 });
+            return { ...meta3, file: file2 };
+          });
+        }
+        return stored2;
       });
       stored = { ...batch, items };
       state = { status: "queued", receivedAt: at, updatedAt: at, history: [{ status: "queued", at, sessionId }] };
@@ -41169,6 +41189,10 @@ var QueueStore = class {
   screenshotBase64(batchId, item) {
     const path = this.screenshotPath(batchId, item);
     return path ? readFileSync2(path).toString("base64") : void 0;
+  }
+  attachmentPath(batchId, attachment) {
+    const path = join2(this.batchDir(batchId), attachment.file);
+    return existsSync(path) ? path : void 0;
   }
   claimDir(batchId) {
     return join2(this.batchDir(batchId), "claim");
