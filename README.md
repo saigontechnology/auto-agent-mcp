@@ -12,14 +12,31 @@ Pages on deployed demos are unaffected: there the extension still sends feedback
 
 ## Install
 
+Requires Node.js 20 or newer.
+
 In Claude Code, in your project:
 
 ```text
-/plugin marketplace add <this repository's git URL>
+/plugin marketplace add saigontechnology/auto-agent-mcp
 /plugin install auto-agent@auto-agent
 ```
 
-Restart Claude Code. The plugin starts one server per session. Requires Node.js 20 or newer. There is nothing to pair: the extension finds the session by itself.
+Or from a terminal:
+
+```bash
+claude plugin marketplace add saigontechnology/auto-agent-mcp
+claude plugin install auto-agent@auto-agent
+```
+
+`saigontechnology/auto-agent-mcp` is short for `https://github.com/saigontechnology/auto-agent-mcp.git`; either works. The marketplace is named `auto-agent` and holds one plugin, also named `auto-agent`.
+
+Restart Claude Code. The plugin starts one server per session. There is nothing to pair: the extension finds the session by itself.
+
+To get a newer version later:
+
+```text
+/plugin marketplace update auto-agent
+```
 
 ### Let Claude start fixing as soon as feedback arrives (optional)
 
@@ -73,6 +90,8 @@ The extension and server speak protocol 1 over WebSocket. Types, schemas and the
 ## Development
 
 ```bash
+git clone https://github.com/saigontechnology/auto-agent-mcp.git auto-agent-claude-plugin
+cd auto-agent-claude-plugin
 pnpm install
 pnpm test          # unit tests
 pnpm test:e2e      # builds, then drives plugin/dist/server.mjs end to end
@@ -95,6 +114,6 @@ Forked from PickFix (`github.com/ledutu-studio/pickfix-mcp` at `1c01a8c`), MIT. 
 
 Plugin này nhận feedback từ extension Auto Agent khi bạn review app chạy ở localhost, rồi chuyển cho Claude Code đang mở trong repo của app để sửa.
 
-1. Cài trong Claude Code: `/plugin marketplace add <git URL của repo này>` rồi `/plugin install auto-agent@auto-agent`, sau đó khởi động lại Claude Code. Không cần ghép cặp.
+1. Cài trong Claude Code (cần Node.js 20 trở lên): `/plugin marketplace add saigontechnology/auto-agent-mcp` rồi `/plugin install auto-agent@auto-agent`, sau đó khởi động lại Claude Code. Không cần ghép cặp. Cập nhật bản mới: `/plugin marketplace update auto-agent`.
 2. Muốn Claude tự sửa ngay khi nhận feedback: mở Claude bằng `claude --dangerously-load-development-channels plugin:auto-agent@auto-agent`.
 3. Không dùng cờ đó thì gõ `/auto-agent:fix` khi panel hiện **Queued**.
