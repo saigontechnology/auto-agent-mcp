@@ -12,9 +12,9 @@ Pages on deployed demos are unaffected: there the extension still sends feedback
 
 ## Watch the guide
 
-[![Auto Agent × Claude Code: developer guide (1:16)](docs/media/auto-agent-claude-code-guide.jpg)](docs/media/auto-agent-claude-code-guide.mp4)
+https://github.com/user-attachments/assets/a61e9003-7a13-4883-a139-f99ebdc2c938
 
-A 76-second walkthrough, no sound: install the plugin, start Claude with the channel, pin feedback on an app running on localhost, send it, and review Claude's fix. Click the picture to play it.
+A 76-second walkthrough, no sound: install the plugin, start Claude with the channel, pin feedback on an app running on localhost, send it, and review Claude's fix. To download it: [docs/media/auto-agent-claude-code-guide.mp4](docs/media/auto-agent-claude-code-guide.mp4).
 
 ## Install
 
