@@ -40217,6 +40217,11 @@ var ATTACHMENT_TYPES = {
   ods: "application/vnd.oasis.opendocument.spreadsheet"
 };
 var INLINE_ATTACHMENT_MIMES = ["text/markdown", "text/csv", "text/plain", "application/json"];
+function attachmentMime(name) {
+  const dot = name.lastIndexOf(".");
+  if (dot <= 0 || dot === name.length - 1) return void 0;
+  return ATTACHMENT_TYPES[name.slice(dot + 1).toLowerCase()];
+}
 function base64Size(data) {
   const padding = data.endsWith("==") ? 2 : data.endsWith("=") ? 1 : 0;
   return Math.floor(data.length * 3 / 4) - padding;
@@ -40281,6 +40286,9 @@ var attachmentSchema = external_exports.object({
   size: external_exports.number().int().positive().max(MAX_ATTACHMENT_BYTES),
   data: base643.max(Math.ceil(MAX_ATTACHMENT_BYTES / 3) * 4)
 }).superRefine((file2, ctx) => {
+  if (attachmentMime(file2.name) !== file2.mime) {
+    ctx.addIssue({ code: "custom", path: ["name"], message: `The name of "${file2.name}" does not match its type ${file2.mime}.` });
+  }
   if (base64Size(file2.data) !== file2.size) {
     ctx.addIssue({ code: "custom", path: ["size"], message: `The data of "${file2.name}" is not ${file2.size} bytes.` });
   }

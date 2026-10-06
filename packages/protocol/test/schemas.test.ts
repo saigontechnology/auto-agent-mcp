@@ -95,6 +95,13 @@ describe('attachments', () => {
     expect(itemSchema.safeParse(makeFileItem('f', six)).success).toBe(false);
   });
 
+  it('refuses a name whose type does not match the MIME and accepts a case-insensitive match', () => {
+    const exe = makeAttachment({ name: 'x.exe', mime: 'application/pdf' });
+    expect(itemSchema.safeParse(makeFileItem('f', [exe])).success).toBe(false);
+    const pdf = makeAttachment({ name: 'REPORT.PDF', mime: 'application/pdf' });
+    expect(itemSchema.safeParse(makeFileItem('f', [pdf])).success).toBe(true);
+  });
+
   it('refuses a size that does not match the data, a MIME outside the list and an empty file', () => {
     expect(itemSchema.safeParse(makeFileItem('f', [makeAttachment({ size: 6 })])).success).toBe(false);
     expect(itemSchema.safeParse(makeFileItem('f', [makeAttachment({ mime: 'application/x-msdownload' })])).success).toBe(false);

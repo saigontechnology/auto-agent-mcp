@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import {
+  attachmentMime,
   ATTACHMENT_TYPES,
   BATCH_SCHEMA,
   ID_PATTERN,
@@ -77,6 +78,9 @@ export const attachmentSchema = z
     data: base64.max(Math.ceil(MAX_ATTACHMENT_BYTES / 3) * 4),
   })
   .superRefine((file, ctx) => {
+    if (attachmentMime(file.name) !== file.mime) {
+      ctx.addIssue({ code: 'custom', path: ['name'], message: `The name of "${file.name}" does not match its type ${file.mime}.` });
+    }
     if (base64Size(file.data) !== file.size) {
       ctx.addIssue({ code: 'custom', path: ['size'], message: `The data of "${file.name}" is not ${file.size} bytes.` });
     }
