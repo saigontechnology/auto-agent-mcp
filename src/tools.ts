@@ -2,8 +2,20 @@ import { readFileSync } from 'node:fs';
 import { isAbsolute, resolve } from 'node:path';
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { LIMITS, WS_PATH, batchReportSchema, batchSchema, renderBatchMarkdown, type BatchStatus, type Session } from '@auto-agent/protocol';
-import type { BatchRecord, QueueStore } from './queue-store.js';
+import {
+  INLINE_ATTACHMENT_MIMES,
+  LIMITS,
+  MAX_INLINE_ATTACHMENT_CHARS,
+  WS_PATH,
+  batchReportSchema,
+  batchSchema,
+  renderBatchMarkdown,
+  type BatchStatus,
+  type RenderableAttachment,
+  type RenderableItem,
+  type Session,
+} from '@auto-agent/protocol';
+import type { BatchRecord, QueueStore, StoredAttachment } from './queue-store.js';
 import { safePath } from './channel.js';
 import { normalizeSourcePath } from './source-paths.js';
 
@@ -36,8 +48,21 @@ function compactLine(text: string, max: number): string {
 function claimMarkdown(deps: ToolDeps, record: BatchRecord): ToolResult {
   const { batch } = record;
   const resolveSource = (hint: { file?: string }) => (hint.file ? normalizeSourcePath(hint.file, deps.repoRoot) : undefined);
+  const attachmentInfo = (_item: RenderableItem, attachment: RenderableAttachment) => {
+    const path = deps.store.attachmentPath(batch.id, attachment as StoredAttachment);
+    if (!path) return undefined;
+    if (!INLINE_ATTACHMENT_MIMES.includes(attachment.mime)) return { path };
+    const content = readFileSync(path, 'utf8');
+    const truncated = content.length > MAX_INLINE_ATTACHMENT_CHARS;
+    return { path, inline: truncated ? content.slice(0, MAX_INLINE_ATTACHMENT_CHARS) : content, truncated };
+  };
   const render = (labels: Map<string, string>) =>
-    renderBatchMarkdown(batch, { repoRoot: deps.repoRoot, resolveSource, screenshotLabel: (item) => labels.get(item.id) });
+    renderBatchMarkdown(batch, {
+      repoRoot: deps.repoRoot,
+      resolveSource,
+      screenshotLabel: (item) => labels.get(item.id),
+      attachmentInfo,
+    });
 
   const full = render(new Map());
   const oversized = full.length > MAX_INLINE_CHARS;

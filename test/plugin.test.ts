@@ -42,7 +42,7 @@ describe('plugin packaging', () => {
     expect(pkg.private).toBe(true);
     expect(pkg.bin).toBeUndefined();
     expect(pkg.files).toBeUndefined();
-    expect(SERVER_VERSION).toBe('0.1.0');
+    expect(SERVER_VERSION).toBe('0.2.0');
   });
 
   it('runs the bundled hook on UserPromptSubmit in exec form', () => {

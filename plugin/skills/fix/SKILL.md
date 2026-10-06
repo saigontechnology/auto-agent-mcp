@@ -6,7 +6,7 @@ description: Fix UI feedback that the Auto Agent browser extension queued for th
 Work through the Auto Agent feedback queue for this repository.
 
 1. Call `auto_agent_list_batches`. If "$ARGUMENTS" names a batch id, use that batch; otherwise take the oldest queued batch. If none are queued, say so and stop.
-2. Call `auto_agent_claim_batch` so no other session works on the same batch. Read every item and look at every screenshot before editing.
+2. Call `auto_agent_claim_batch` so no other session works on the same batch. Read every item, look at every screenshot and read the attached files the requests depend on before editing.
 3. For each item, locate the code in this order:
    a. `source.file:line` when confidence is `exact` or `file`;
    b. the component chain: search for the component's definition;

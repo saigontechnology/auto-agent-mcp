@@ -37,7 +37,7 @@ async function start(overrides: { preAuthMs?: number } = {}) {
 
 async function authed(): Promise<TestClient> {
   const client = await connect(bridge.port);
-  expect(await client.next()).toMatchObject({ type: 'server.info', app: 'auto-agent', protocol: 1 });
+  expect(await client.next()).toMatchObject({ type: 'server.info', app: 'auto-agent', protocol: 1, features: ['attachments'] });
   client.send(hello());
   expect(await client.next()).toEqual({ v: 1, type: 'welcome', session });
   return client;
