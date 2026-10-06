@@ -1,4 +1,4 @@
-import type { Batch, Item } from '../src/index.js';
+import type { Attachment, Batch, Item } from '../src/index.js';
 
 /** A valid 1×1 transparent PNG. */
 export const PNG_1PX =
@@ -44,5 +44,23 @@ export function makeBatch(overrides: Partial<Batch> = {}): Batch {
     client: { extensionVersion: '0.1.0', userAgent: 'Mozilla/5.0 Chrome/141' },
     items: [makeElementItem()],
     ...overrides,
+  };
+}
+
+/** "hello" in base64: 5 bytes. */
+export const HELLO_B64 = 'aGVsbG8=';
+
+export function makeAttachment(overrides: Partial<Attachment> = {}): Attachment {
+  return { id: 'att-1', name: 'notes.md', mime: 'text/markdown', size: 5, data: HELLO_B64, ...overrides };
+}
+
+export function makeFileItem(id = 'file-1', attachments: Attachment[] = [makeAttachment()]): Item {
+  return {
+    id,
+    kind: 'file',
+    comment: 'Use these numbers for the pricing table.',
+    page: { url: 'http://localhost:5173/pricing', path: '/pricing', title: 'Pricing' },
+    attachments,
+    createdAt: '2026-10-06T10:00:00.000Z',
   };
 }

@@ -55,4 +55,13 @@ describe('parseServerMessage', () => {
     const result = parseServerMessage('{"v":1,"type":"error","code":"unauthorized","message":"Send hello first."}');
     expect(result.ok && result.message.type === 'error' && result.message.code).toBe('unauthorized');
   });
+
+  it('reads the features a server.info announces, and none from an older server', () => {
+    const withFeatures = parseServerMessage(
+      JSON.stringify({ v: 1, type: 'server.info', app: 'auto-agent', protocol: 1, serverVersion: '0.2.0', features: ['attachments'] }),
+    );
+    expect(withFeatures.ok && withFeatures.message.type === 'server.info' && withFeatures.message.features).toEqual(['attachments']);
+    const older = parseServerMessage(JSON.stringify({ v: 1, type: 'server.info', app: 'auto-agent', protocol: 1, serverVersion: '0.1.0' }));
+    expect(older.ok && older.message.type === 'server.info' && older.message.features).toBeUndefined();
+  });
 });

@@ -30,7 +30,14 @@ export const clientMessageSchema = z.discriminatedUnion('type', [
 ]);
 
 export const serverMessageSchema = z.discriminatedUnion('type', [
-  z.object({ v, type: z.literal('server.info'), app: z.literal(APP_ID), protocol: z.number().int(), serverVersion: z.string().max(50) }),
+  z.object({
+    v,
+    type: z.literal('server.info'),
+    app: z.literal(APP_ID),
+    protocol: z.number().int(),
+    serverVersion: z.string().max(50),
+    features: z.array(z.string().max(50)).max(20).optional(),
+  }),
   z.object({ v, type: z.literal('welcome'), session: sessionSchema }),
   z.object({ v, type: z.literal('batch.accepted'), requestId: idSchema, batchId: idSchema, status: batchStatusSchema }),
   z.object({

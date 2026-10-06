@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
   APP_ID,
+  ATTACHMENT_TYPES,
   BATCH_SCHEMA,
+  FEATURE_ATTACHMENTS,
   ID_PATTERN,
   LIMITS,
+  MAX_ATTACHMENT_BYTES,
+  MAX_BATCH_ATTACHMENT_BYTES,
   MAX_MESSAGE_BYTES,
   PORTS,
   PORT_FIRST,
@@ -26,6 +30,12 @@ describe('constants', () => {
     expect(BATCH_SCHEMA).toBe('auto-agent.batch/1');
     expect(MAX_MESSAGE_BYTES).toBe(15 * 1024 * 1024);
     expect(LIMITS.summary).toBe(600);
+    expect(MAX_ATTACHMENT_BYTES).toBe(10 * 1024 * 1024);
+    expect(MAX_BATCH_ATTACHMENT_BYTES).toBe(10 * 1024 * 1024);
+    expect(FEATURE_ATTACHMENTS).toBe('attachments');
+    expect(Object.keys(ATTACHMENT_TYPES).sort()).toEqual(
+      ['csv', 'doc', 'docx', 'json', 'md', 'ods', 'odt', 'pdf', 'ppt', 'pptx', 'rtf', 'txt', 'xls', 'xlsx'],
+    );
   });
 
   it('accepts uuids and rejects path-like ids', () => {
