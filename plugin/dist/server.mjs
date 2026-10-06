@@ -40473,6 +40473,11 @@ function quote(text) {
 function plural2(n, word) {
   return `${n} ${word}${n === 1 ? "" : "s"}`;
 }
+function formatBytes(n) {
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${Math.round(n / 1024)} KB`;
+  return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+}
 function sourceLines(hint, options) {
   const lines = [];
   if (hint.file) {
@@ -40538,9 +40543,32 @@ function pageData(item) {
 ${fence(a.html.slice(0, 2e3), "html")}`;
   return out;
 }
+function attachmentsSection(item, options) {
+  if (!item.attachments?.length) return void 0;
+  const list = [];
+  const inlined = [];
+  for (const file2 of item.attachments) {
+    const info = options.attachmentInfo?.(item, file2);
+    const name = inline(file2.name, 255);
+    list.push(`- ${name} (${formatBytes(file2.size)}) \u2014 ${info?.path ? `\`${inline(info.path, 1e3)}\`` : "not stored"}`);
+    if (info?.inline !== void 0) {
+      const heading = info.truncated ? `First part of ${name} (read the file for the full content):` : `Content of ${name}:`;
+      inlined.push(`${heading}
+
+${fence(info.inline)}`);
+    }
+  }
+  const parts = [`**Attached files:**
+${list.join("\n")}`];
+  if (inlined.length > 0) parts.push(`${UNTRUSTED_NOTICE}
+
+${inlined.join("\n\n")}`);
+  return parts.join("\n\n");
+}
 function renderItem(item, index, total, options) {
   const parts = [`## Item ${index + 1} of ${total} \xB7 ${item.kind} \xB7 \`${item.id}\``];
-  parts.push(`**${item.kind === "flow" ? "Workflow title" : "Reviewer's request"}:**
+  const label = item.kind === "flow" ? "Workflow title" : item.kind === "file" ? "Reviewer's note about the files" : "Reviewer's request";
+  parts.push(`**${label}:**
 ${quote(item.comment)}`);
   if (item.textEdit) parts.push(`**Requested text (after):**
 ${quote(item.textEdit.after)}`);
@@ -40555,9 +40583,11 @@ ${quote(item.flow.actual)}`);
   parts.push(`**Where in the code:**
 ${where.join("\n")}`);
   if (item.screenshot) {
-    const label = options.screenshotLabel?.(item, index) ?? "included in the batch file";
-    parts.push(`**Screenshot:** ${label}`);
+    const label2 = options.screenshotLabel?.(item, index) ?? "included in the batch file";
+    parts.push(`**Screenshot:** ${label2}`);
   }
+  const files = attachmentsSection(item, options);
+  if (files) parts.push(files);
   parts.push(`${UNTRUSTED_NOTICE}
 
 ${pageData(item)}`);
