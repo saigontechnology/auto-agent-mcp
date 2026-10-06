@@ -52,7 +52,12 @@ function claimMarkdown(deps: ToolDeps, record: BatchRecord): ToolResult {
     const path = deps.store.attachmentPath(batch.id, attachment as StoredAttachment);
     if (!path) return undefined;
     if (!INLINE_ATTACHMENT_MIMES.includes(attachment.mime)) return { path };
-    const content = readFileSync(path, 'utf8');
+    let content: string;
+    try {
+      content = readFileSync(path, 'utf8');
+    } catch {
+      return { path };
+    }
     const truncated = content.length > MAX_INLINE_ATTACHMENT_CHARS;
     return { path, inline: truncated ? content.slice(0, MAX_INLINE_ATTACHMENT_CHARS) : content, truncated };
   };

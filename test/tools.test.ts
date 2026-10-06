@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Session } from '@auto-agent/protocol';
@@ -181,6 +181,19 @@ describe('auto_agent_claim_batch with attached files', () => {
       : readFileSync(/at (\S+batch\.md)\./.exec(text(result))![1]!, 'utf8');
     expect(full).toContain('First part of big.txt (read the file for the full content):');
     expect(full).not.toContain('x'.repeat(20_001));
+  });
+  it('still claims the batch and lists the path when the stored text file cannot be read', async () => {
+    const csv = Buffer.from('plan,price\n').toString('base64');
+    const item = makeFileItem('file-1', [makeAttachment({ name: 'prices.csv', mime: 'text/csv', size: 11, data: csv })]);
+    const { record } = deps.store.add(makeBatch({ items: [item] }), 's');
+    const stored = deps.store.attachmentPath(record.batch.id, record.batch.items[0]!.attachments![0] as never)!;
+    rmSync(stored);
+    mkdirSync(stored);
+    const result = (await call('auto_agent_claim_batch')) as { isError?: boolean };
+    const md = text(result);
+    expect(result.isError).toBeFalsy();
+    expect(md).toContain('- prices.csv (11 B) — `' + stored + '`');
+    expect(md).not.toContain('Content of prices.csv');
   });
 });
 
