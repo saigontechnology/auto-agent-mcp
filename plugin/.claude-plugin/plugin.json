@@ -1,7 +1,7 @@
 {
   "name": "auto-agent",
   "displayName": "Auto Agent",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "description": "Receive UI feedback from the Auto Agent browser extension (picked elements, text edits, page comments, recorded workflows) and fix it in this session.",
   "author": { "name": "Saigon Technology" },
   "keywords": ["feedback", "frontend", "ui", "browser-extension", "mcp"],
