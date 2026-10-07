@@ -79,6 +79,14 @@ The extension looks for sessions on ports 47320–47329 every few seconds. When 
    Claude calls `auto_agent_get_session` and prints this session's connect code, `<port>:<sessionId>`, for example `47321:690c66af-7bf3-4388-9a9a-9fca822f294b`. You can also ask Claude for `auto_agent_get_session` directly.
 3. In the panel, choose **Connect manually** (on the "No Claude Code session" card, or **Change** → **Connect manually**), paste the code and press **Connect**. The extension connects straight to that port, checks that the session id matches, and sends this site's feedback to that session from then on.
 
+   <img src="docs/media/connect-manually-1-sessions.png" width="392" alt="The session list after Change: the refresh icon at the top right, the running sessions, and the Connect manually link below them">
+
+   <img src="docs/media/connect-manually-2-paste-code.png" width="392" alt="The Connect manually form with a connect code pasted and the Connect button next to it">
+
+4. The panel shows **To Claude · \<repository\>** for the session the code named. **Change** and the refresh icon stay next to it.
+
+   <img src="docs/media/connect-manually-3-connected.png" width="392" alt="The panel connected: To Claude vibe-code, with Change and the refresh icon">
+
 The code changes every time the Claude Code session restarts; run `/auto-agent:connect` again for the new one.
 
 | The panel says | What to do |
@@ -169,6 +177,6 @@ Extension tự dò các port 47320–47329 vài giây một lần. Nếu panel k
 
 1. Bấm icon refresh (↻) cạnh **Change** hoặc ở đầu danh sách phiên để dò lại tất cả port.
 2. Vẫn không thấy thì gõ `/auto-agent:connect` trong Claude Code. Claude gọi `auto_agent_get_session` và in ra mã kết nối dạng `<port>:<sessionId>`, ví dụ `47321:690c66af-7bf3-4388-9a9a-9fca822f294b`.
-3. Trong panel, chọn **Connect manually** (hoặc **Change** → **Connect manually**), dán mã rồi bấm **Connect**. Extension nối thẳng vào port đó, kiểm tra session id có khớp không, rồi từ đó gửi feedback của trang này tới phiên ấy.
+3. Trong panel, chọn **Connect manually** (hoặc **Change** → **Connect manually**), dán mã rồi bấm **Connect**. Extension nối thẳng vào port đó, kiểm tra session id có khớp không, rồi từ đó gửi feedback của trang này tới phiên ấy. Panel chuyển sang **To Claude · \<tên repo\>**. Ảnh minh hoạ từng bước có ở mục [Connect manually](#connect-manually).
 
 Mã đổi mỗi khi phiên Claude Code khởi động lại, lúc đó chạy lại `/auto-agent:connect`. Nếu panel báo **The extension did not respond**, extension vẫn đang chạy bản cũ: vào `chrome://extensions` và bấm reload ở Auto Agent (`/reload-plugins` chỉ nạp lại plugin, không nạp lại extension). Các lỗi khác và cách xử lý: xem bảng ở mục [Connect manually](#connect-manually).
