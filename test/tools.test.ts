@@ -43,7 +43,7 @@ const call = (name: string, args: Record<string, unknown> = {}) => mcp.client.ca
 it('lists the six tools', async () => {
   const { tools } = await mcp.client.listTools();
   expect(tools.map((t) => t.name).sort()).toEqual(
-    ['auto_agent_claim_batch', 'auto_agent_import', 'auto_agent_list_batches', 'auto_agent_report', 'auto_agent_status'].sort(),
+    ['auto_agent_claim_batch', 'auto_agent_get_session', 'auto_agent_import', 'auto_agent_list_batches', 'auto_agent_report', 'auto_agent_status'].sort(),
   );
 });
 
@@ -57,6 +57,25 @@ it('describes the session and the queue', async () => {
 it('says why the extension link is down', async () => {
   deps.linkStatus = () => ({ port: null, reason: 'All ports 47320–47329 are in use by other sessions.' });
   expect(text(await call('auto_agent_status'))).toContain('All ports 47320–47329 are in use');
+});
+
+describe('auto_agent_get_session', () => {
+  it('gives the connect code to paste into the extension', async () => {
+    const result = await call('auto_agent_get_session');
+    expect(result.isError).toBeFalsy();
+    const out = text(result);
+    expect(out).toContain('Connect code: 47320:session-a');
+    expect(out).toContain(deps.repoRoot);
+    expect(out).toContain('Connect manually');
+  });
+
+  it('says why there is no code when the extension link is down', async () => {
+    deps.linkStatus = () => ({ port: null, reason: 'All ports 47320–47329 are in use by other sessions.' });
+    const result = await call('auto_agent_get_session');
+    expect(result.isError).toBe(true);
+    expect(text(result)).toContain('All ports 47320–47329 are in use');
+    expect(text(result)).not.toContain('Connect code');
+  });
 });
 
 describe('auto_agent_list_batches', () => {

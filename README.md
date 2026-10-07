@@ -70,6 +70,7 @@ Feedback sent while Claude Code is closed shows **Not yet received** and goes ou
 | Tool | Purpose |
 |---|---|
 | `auto_agent_status` | Session, repository, port and batch counts |
+| `auto_agent_get_session` | Connect code (`port:sessionId`) to paste under **Connect manually** in the extension when it does not find this session on its own |
 | `auto_agent_list_batches` | Queued and working batches (or by status) |
 | `auto_agent_claim_batch` | Claims a batch and returns its items as markdown |
 | `auto_agent_report` | Reports `done` / `partial` / `failed` with a summary and per-item results |

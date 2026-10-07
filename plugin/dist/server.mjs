@@ -40233,6 +40233,11 @@ function base64Size(data) {
   return Math.floor(data.length * 3 / 4) - padding;
 }
 
+// packages/protocol/src/connect-code.ts
+function formatConnectCode(port, sessionId) {
+  return `${port}:${sessionId}`;
+}
+
 // packages/protocol/src/extension-identity.ts
 var EXTENSION_ID = "halobcdjpokedneejfmdjecjgdkejjdk";
 
@@ -41513,6 +41518,26 @@ function registerTools(server, getDeps) {
           `Agent: ${deps.session.agent} \xB7 session ${deps.session.sessionId}`,
           link.port ? `Extension link: listening on ws://127.0.0.1:${link.port}${WS_PATH}` : `Extension link: not available. ${link.reason ?? ""}`.trim(),
           `Batches: ${countText}`
+        ].join("\n")
+      );
+    }
+  );
+  server.registerTool(
+    "auto_agent_get_session",
+    {
+      title: "Get the Auto Agent connect code",
+      description: `Get this session's connect code for the Auto Agent extension. Use it when the extension does not find this session on its own: the reviewer pastes the code under "Connect manually" in the extension panel.`,
+      annotations: { readOnlyHint: true }
+    },
+    async () => {
+      const deps = await getDeps();
+      const link = deps.linkStatus();
+      if (!link.port) return error62(`This session has no extension link, so there is no connect code. ${link.reason ?? ""}`.trim());
+      return ok(
+        [
+          `Connect code: ${formatConnectCode(link.port, deps.session.sessionId)}`,
+          `Session for ${deps.session.name} (${deps.repoRoot}), listening on ws://127.0.0.1:${link.port}${WS_PATH}`,
+          'In the Auto Agent extension panel, choose "Connect manually" and paste the code. The code changes when this session restarts.'
         ].join("\n")
       );
     }
