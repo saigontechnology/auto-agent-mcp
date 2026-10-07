@@ -112,6 +112,7 @@ pnpm test          # unit tests
 pnpm test:e2e      # builds, then drives plugin/dist/server.mjs end to end
 pnpm build         # rebuild plugin/dist (commit the result; a test checks it is fresh)
 pnpm compile       # type-check
+pnpm bump-version-patch   # or -minor / -major: bump the version everywhere and rebuild plugin/dist (do this in every release PR)
 pnpm --filter @auto-agent/protocol build   # build the protocol package the extension links to
 ```
 
