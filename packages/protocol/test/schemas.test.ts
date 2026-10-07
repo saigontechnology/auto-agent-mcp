@@ -121,6 +121,10 @@ describe('attachments', () => {
   it('maps a file name to the allow-list MIME, ignoring case', () => {
     expect(attachmentMime('REPORT.PDF')).toBe('application/pdf');
     expect(attachmentMime('data.csv')).toBe('text/csv');
+    expect(attachmentMime('java_error_in_studio_955.log')).toBe('text/plain');
+    expect(attachmentMime('Screen Shot.PNG')).toBe('image/png');
+    expect(attachmentMime('photo.jpg')).toBe('image/jpeg');
+    expect(attachmentMime('icon.svg')).toBeUndefined();
     expect(attachmentMime('setup.exe')).toBeUndefined();
     expect(attachmentMime('README')).toBeUndefined();
   });

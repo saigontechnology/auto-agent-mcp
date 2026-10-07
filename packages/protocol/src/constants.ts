@@ -35,7 +35,7 @@ export const MAX_INLINE_ATTACHMENT_CHARS = 20_000;
 /** Announced in server.info by a plugin that stores attached files. */
 export const FEATURE_ATTACHMENTS = 'attachments';
 
-/** Document types a reviewer may attach: lower-case extension → the MIME type sent on. */
+/** Document and image types a reviewer may attach: lower-case extension → the MIME type sent on. */
 export const ATTACHMENT_TYPES: Readonly<Record<string, string>> = {
   pdf: 'application/pdf',
   doc: 'application/msword',
@@ -47,16 +47,22 @@ export const ATTACHMENT_TYPES: Readonly<Record<string, string>> = {
   csv: 'text/csv',
   md: 'text/markdown',
   txt: 'text/plain',
+  log: 'text/plain',
   json: 'application/json',
   rtf: 'application/rtf',
   odt: 'application/vnd.oasis.opendocument.text',
   ods: 'application/vnd.oasis.opendocument.spreadsheet',
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  gif: 'image/gif',
+  webp: 'image/webp',
 };
 
 /** Text types shown inline to Claude, up to MAX_INLINE_ATTACHMENT_CHARS. */
 export const INLINE_ATTACHMENT_MIMES: readonly string[] = ['text/markdown', 'text/csv', 'text/plain', 'application/json'];
 
-/** The allow-list MIME type for a file name, or undefined when its extension is not a document type. */
+/** The allow-list MIME type for a file name, or undefined when its extension is not an allowed type. */
 export function attachmentMime(name: string): string | undefined {
   const dot = name.lastIndexOf('.');
   if (dot <= 0 || dot === name.length - 1) return undefined;

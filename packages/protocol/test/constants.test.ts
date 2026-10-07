@@ -34,7 +34,7 @@ describe('constants', () => {
     expect(MAX_BATCH_ATTACHMENT_BYTES).toBe(10 * 1024 * 1024);
     expect(FEATURE_ATTACHMENTS).toBe('attachments');
     expect(Object.keys(ATTACHMENT_TYPES).sort()).toEqual(
-      ['csv', 'doc', 'docx', 'json', 'md', 'ods', 'odt', 'pdf', 'ppt', 'pptx', 'rtf', 'txt', 'xls', 'xlsx'],
+      ['csv', 'doc', 'docx', 'gif', 'jpeg', 'jpg', 'json', 'log', 'md', 'ods', 'odt', 'pdf', 'png', 'ppt', 'pptx', 'rtf', 'txt', 'webp', 'xls', 'xlsx'],
     );
   });
 

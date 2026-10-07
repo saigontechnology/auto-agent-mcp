@@ -40211,10 +40211,16 @@ var ATTACHMENT_TYPES = {
   csv: "text/csv",
   md: "text/markdown",
   txt: "text/plain",
+  log: "text/plain",
   json: "application/json",
   rtf: "application/rtf",
   odt: "application/vnd.oasis.opendocument.text",
-  ods: "application/vnd.oasis.opendocument.spreadsheet"
+  ods: "application/vnd.oasis.opendocument.spreadsheet",
+  png: "image/png",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  gif: "image/gif",
+  webp: "image/webp"
 };
 var INLINE_ATTACHMENT_MIMES = ["text/markdown", "text/csv", "text/plain", "application/json"];
 function attachmentMime(name) {
