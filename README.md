@@ -36,7 +36,7 @@ claude plugin install auto-agent@auto-agent
 
 `saigontechnology/auto-agent-mcp` is short for `https://github.com/saigontechnology/auto-agent-mcp.git`; either works. The marketplace is named `auto-agent` and holds one plugin, also named `auto-agent`.
 
-Restart Claude Code. The plugin starts one server per session. There is nothing to pair: the extension finds the session by itself.
+Restart Claude Code. The plugin starts one server per session. There is nothing to pair: the extension finds the session by itself. If it ever does not, see [Connect manually](#connect-manually).
 
 To get a newer version later:
 
@@ -54,7 +54,7 @@ claude --dangerously-load-development-channels plugin:auto-agent@auto-agent
 
 Claude Code shows a warning first; choose **I am using this for local development**. A shell alias helps: `alias claudefix='claude --dangerously-load-development-channels plugin:auto-agent@auto-agent'`.
 
-Without the flag everything still works: run `/auto-agent:fix` when the extension shows **Queued**. A hook also reminds Claude of waiting feedback when you send a prompt.
+Without the flag everything still works: run `/auto-agent:fix` when the extension shows **Queued**. `/auto-agent:connect` prints the code for [Connect manually](#connect-manually). A hook also reminds Claude of waiting feedback when you send a prompt.
 
 ## Use it
 
@@ -64,6 +64,33 @@ Without the flag everything still works: run `/auto-agent:fix` when the extensio
 4. Press **Send N drafts to Claude**. The batch shows **Queued**, then **Claude is fixing**, then **Done**, **Partly done** or **Couldn't fix**, with Claude's summary and each item's outcome.
 
 Feedback sent while Claude Code is closed shows **Not yet received** and goes out when it starts. A queued batch can be cancelled, and a batch Claude Code refused can go back to drafts.
+
+## Connect manually
+
+The extension looks for sessions on ports 47320–47329 every few seconds. When it does not find yours (the session list is empty, the wrong session is shown, or it stays on **Waiting for Claude Code**):
+
+1. Press the refresh icon (↻) next to **Change**, or at the top of the session list, to look on every port again, including ports that refused an earlier handshake.
+2. Still not there? In Claude Code, run:
+
+   ```text
+   /auto-agent:connect
+   ```
+
+   Claude calls `auto_agent_get_session` and prints this session's connect code, `<port>:<sessionId>`, for example `47321:690c66af-7bf3-4388-9a9a-9fca822f294b`. You can also ask Claude for `auto_agent_get_session` directly.
+3. In the panel, choose **Connect manually** (on the "No Claude Code session" card, or **Change** → **Connect manually**), paste the code and press **Connect**. The extension connects straight to that port, checks that the session id matches, and sends this site's feedback to that session from then on.
+
+The code changes every time the Claude Code session restarts; run `/auto-agent:connect` again for the new one.
+
+| The panel says | What to do |
+|---|---|
+| This is not an Auto Agent connect code | Paste the whole code, port and session id; only ports 47320–47329 are accepted. |
+| Nothing answered on port … | That session is closed. Start Claude Code again and get a new code. |
+| Port … now belongs to another Claude Code session | The session restarted and another one took the port. Get a new code. |
+| … did not answer in time | The session is busy or stuck. Restart it, or press ↻ and try again. |
+| The Auto Agent plugin and this extension don't match | Update both: `/plugin marketplace update auto-agent` and the latest extension. |
+| The extension did not respond | The extension's background is still an older build. Open `chrome://extensions` and press reload on Auto Agent. `/reload-plugins` reloads the plugin only, not the extension. |
+
+If `/auto-agent:connect` reports that the session has no extension link, all ten ports are taken (or the server could not start): close a Claude Code session you no longer use and restart this one.
 
 ## What Claude gets
 
@@ -135,3 +162,13 @@ Plugin này nhận feedback từ extension Auto Agent khi bạn review app chạ
 2. Muốn Claude tự sửa ngay khi nhận feedback: mở Claude bằng `claude --dangerously-load-development-channels plugin:auto-agent@auto-agent`.
 3. Không dùng cờ đó thì gõ `/auto-agent:fix` khi panel hiện **Queued**.
 4. Mở app ở localhost, mở panel Auto Agent (không cần đăng nhập), chọn **Select** rồi click vào phần tử cần sửa, ghi nội dung và **Save**, cuối cùng bấm **Send N drafts to Claude**. Panel hiện **Queued** → **Claude is fixing** → **Done** kèm tóm tắt của Claude.
+
+### Kết nối thủ công
+
+Extension tự dò các port 47320–47329 vài giây một lần. Nếu panel không thấy phiên Claude Code của bạn:
+
+1. Bấm icon refresh (↻) cạnh **Change** hoặc ở đầu danh sách phiên để dò lại tất cả port.
+2. Vẫn không thấy thì gõ `/auto-agent:connect` trong Claude Code. Claude gọi `auto_agent_get_session` và in ra mã kết nối dạng `<port>:<sessionId>`, ví dụ `47321:690c66af-7bf3-4388-9a9a-9fca822f294b`.
+3. Trong panel, chọn **Connect manually** (hoặc **Change** → **Connect manually**), dán mã rồi bấm **Connect**. Extension nối thẳng vào port đó, kiểm tra session id có khớp không, rồi từ đó gửi feedback của trang này tới phiên ấy.
+
+Mã đổi mỗi khi phiên Claude Code khởi động lại, lúc đó chạy lại `/auto-agent:connect`. Nếu panel báo **The extension did not respond**, extension vẫn đang chạy bản cũ: vào `chrome://extensions` và bấm reload ở Auto Agent (`/reload-plugins` chỉ nạp lại plugin, không nạp lại extension). Các lỗi khác và cách xử lý: xem bảng ở mục [Connect manually](#connect-manually).
