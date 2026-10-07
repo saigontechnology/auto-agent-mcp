@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { FIX_BODY, FIX_DESCRIPTION } from '../src/prompts.js';
+import { CONNECT_BODY, CONNECT_DESCRIPTION, FIX_BODY, FIX_DESCRIPTION } from '../src/prompts.js';
 import { SERVER_VERSION } from '../src/version.js';
 
 const json = (path: string) => JSON.parse(readFileSync(path, 'utf8'));
@@ -62,5 +62,13 @@ describe('skills match the MCP prompt texts', () => {
     expect(fields.name).toBe('fix');
     expect(fields.description).toBe(FIX_DESCRIPTION);
     expect(body).toBe(FIX_BODY);
+  });
+
+  it('connect', () => {
+    const { fields, body } = skill('plugin/skills/connect/SKILL.md');
+    expect(fields.name).toBe('connect');
+    expect(fields.description).toBe(CONNECT_DESCRIPTION);
+    expect(body).toBe(CONNECT_BODY);
+    expect(body).toContain('auto_agent_get_session');
   });
 });

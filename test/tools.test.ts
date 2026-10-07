@@ -266,6 +266,12 @@ it('serves the fix prompt with the batch id filled in', async () => {
   expect(body).toContain('"batch-9" names a batch id');
 });
 
+it('serves the connect prompt that asks for the connect code', async () => {
+  const prompt = await mcp.client.getPrompt({ name: 'connect' });
+  const body = (prompt.messages[0]?.content as { text: string }).text;
+  expect(body).toContain('auto_agent_get_session');
+});
+
 it('returns an error naming the cause when start-up failed', async () => {
   const { Client } = await import('@modelcontextprotocol/sdk/client/index.js');
   const { InMemoryTransport } = await import('@modelcontextprotocol/sdk/inMemory.js');

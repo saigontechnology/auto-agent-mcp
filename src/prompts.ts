@@ -33,6 +33,16 @@ export const FIX_BODY = `Work through the Auto Agent feedback queue for this rep
 6. Call \`auto_agent_report\` with outcome \`done\`, \`partial\` or \`failed\`; a one- or two-sentence summary written for the reviewer (what changed and where, or why not); \`changedFiles\`; and a per-item outcome with a short note.
 7. If more batches are queued, continue with the next one.`;
 
+export const CONNECT_DESCRIPTION = 'Show the connect code that pairs this Claude Code session with the Auto Agent extension. Use when the extension does not find this session, or the user asks for the Auto Agent port, session id or connect code.';
+
+export const CONNECT_BODY = `Give the user the code that connects the Auto Agent extension to this session.
+
+1. Call \`auto_agent_get_session\`.
+2. If it returns a connect code, show the code on its own line in a code block so it is easy to copy, then tell the user: in the Auto Agent extension panel, choose "Connect manually" (or "Change", then "Connect manually"), paste the code and press Connect. Mention that the code changes when this Claude Code session restarts.
+3. If it reports that this session has no extension link, pass on the reason it gives and what to do about it. Do not make up a code.
+
+Answer in the user's language. Do not change any files.`;
+
 export function registerPrompts(server: McpServer): void {
   server.registerPrompt(
     'fix',
@@ -45,4 +55,8 @@ export function registerPrompts(server: McpServer): void {
       messages: [{ role: 'user', content: { type: 'text', text: FIX_BODY.replace('$ARGUMENTS', batchId ?? '') } }],
     }),
   );
+
+  server.registerPrompt('connect', { title: 'Connect the Auto Agent extension', description: CONNECT_DESCRIPTION }, () => ({
+    messages: [{ role: 'user', content: { type: 'text', text: CONNECT_BODY } }],
+  }));
 }
