@@ -1,6 +1,6 @@
 {
   "name": "auto-agent-claude-plugin",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Claude Code plugin that receives UI feedback from the Auto Agent browser extension and hands it to Claude.",
   "license": "MIT",
