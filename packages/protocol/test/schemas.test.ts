@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { batchReportSchema, batchSchema, flowStepSchema, itemSchema } from '../src/index.js';
-import { makeBatch, makeElementItem } from './fixtures.js';
+import { attachmentMime, batchReportSchema, batchSchema, base64Size, flowStepSchema, itemSchema, MAX_ATTACHMENTS_PER_ITEM } from '../src/index.js';
+import { makeBatch, makeAttachment, makeElementItem, makeFileItem } from './fixtures.js';
 
 describe('batchSchema', () => {
   it('accepts a valid batch', () => {
@@ -75,5 +75,58 @@ describe('batchReportSchema', () => {
   it('caps the summary at 600 characters', () => {
     const report = { outcome: 'done', summary: 'x'.repeat(601), changedFiles: [], items: [] };
     expect(batchReportSchema.safeParse(report).success).toBe(false);
+  });
+});
+
+describe('attachments', () => {
+  it('accepts a file item and files on an element item', () => {
+    expect(itemSchema.safeParse(makeFileItem()).success).toBe(true);
+    expect(itemSchema.safeParse({ ...makeElementItem(), attachments: [makeAttachment()] }).success).toBe(true);
+  });
+
+  it('requires at least one file on a file item', () => {
+    expect(itemSchema.safeParse(makeFileItem('f', [])).success).toBe(false);
+    const { attachments: _a, ...none } = makeFileItem();
+    expect(itemSchema.safeParse(none).success).toBe(false);
+  });
+
+  it('refuses more than five files on one item', () => {
+    const six = Array.from({ length: MAX_ATTACHMENTS_PER_ITEM + 1 }, (_, i) => makeAttachment({ id: `a${i}` }));
+    expect(itemSchema.safeParse(makeFileItem('f', six)).success).toBe(false);
+  });
+
+  it('refuses a name whose type does not match the MIME and accepts a case-insensitive match', () => {
+    const exe = makeAttachment({ name: 'x.exe', mime: 'application/pdf' });
+    expect(itemSchema.safeParse(makeFileItem('f', [exe])).success).toBe(false);
+    const pdf = makeAttachment({ name: 'REPORT.PDF', mime: 'application/pdf' });
+    expect(itemSchema.safeParse(makeFileItem('f', [pdf])).success).toBe(true);
+  });
+
+  it('refuses a size that does not match the data, a MIME outside the list and an empty file', () => {
+    expect(itemSchema.safeParse(makeFileItem('f', [makeAttachment({ size: 6 })])).success).toBe(false);
+    expect(itemSchema.safeParse(makeFileItem('f', [makeAttachment({ mime: 'application/x-msdownload' })])).success).toBe(false);
+    expect(itemSchema.safeParse(makeFileItem('f', [makeAttachment({ data: '', size: 0 })])).success).toBe(false);
+  });
+
+  it('refuses a batch whose files pass 10 MB in total', () => {
+    // Two 6 MB files: each is allowed, together they are not.
+    const six = 'A'.repeat(8 * 1024 * 1024); // 8 Mi base64 chars = 6 MiB
+    const big = (id: string) => makeAttachment({ id, name: `${id}.txt`, mime: 'text/plain', size: base64Size(six), data: six });
+    const batch = makeBatch({ items: [makeFileItem('f1', [big('a')]), makeFileItem('f2', [big('b')])] });
+    const result = batchSchema.safeParse(batch);
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error.issues[0]?.message).toContain('10 MB');
+  });
+
+  it('maps a file name to the allow-list MIME, ignoring case', () => {
+    expect(attachmentMime('REPORT.PDF')).toBe('application/pdf');
+    expect(attachmentMime('data.csv')).toBe('text/csv');
+    expect(attachmentMime('setup.exe')).toBeUndefined();
+    expect(attachmentMime('README')).toBeUndefined();
+  });
+
+  it('measures decoded base64', () => {
+    expect(base64Size('aGVsbG8=')).toBe(5);
+    expect(base64Size('aGVsbG8h')).toBe(6);
   });
 });

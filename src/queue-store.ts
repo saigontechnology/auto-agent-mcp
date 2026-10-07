@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, statSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { ID_PATTERN, type Batch, type BatchReport, type BatchStatus, type Item, type Screenshot } from '@auto-agent/protocol';
+import { ID_PATTERN, type Attachment, type Batch, type BatchReport, type BatchStatus, type Item, type Screenshot } from '@auto-agent/protocol';
 import { readJson, writeJson } from './fs-json.js';
 import { ensureHome } from './home.js';
 import { log as defaultLog } from './log.js';
@@ -17,7 +17,8 @@ export type BatchState = {
 };
 
 export type StoredScreenshot = Omit<Screenshot, 'data'> & { file: string };
-export type StoredItem = Omit<Item, 'screenshot'> & { screenshot?: StoredScreenshot };
+export type StoredAttachment = Omit<Attachment, 'data'> & { file: string };
+export type StoredItem = Omit<Item, 'screenshot' | 'attachments'> & { screenshot?: StoredScreenshot; attachments?: StoredAttachment[] };
 export type StoredBatch = Omit<Batch, 'items'> & { items: StoredItem[] };
 export type BatchRecord = { batch: StoredBatch; state: BatchState };
 
@@ -45,6 +46,17 @@ function originOf(url: string): string {
   } catch {
     return '';
   }
+}
+
+const ATTACHMENTS_DIR = 'attachments';
+
+/** A file name made of [A-Za-z0-9._-] only, at most 100 characters, keeping its extension. */
+export function safeAttachmentName(name: string): string {
+  const safe = name.replace(/[^A-Za-z0-9._-]/g, '_');
+  if (safe.length <= 100) return safe;
+  const dot = safe.lastIndexOf('.');
+  const ext = dot > 0 && safe.length - dot <= 10 ? safe.slice(dot) : '';
+  return safe.slice(0, 100 - ext.length) + ext;
 }
 
 export type ClaimOwner = { sessionId: string; pid: number; at: string; kind: 'claim' | 'cancel' };
@@ -150,11 +162,23 @@ export class QueueStore {
     try {
       mkdirSync(tmp, { mode: 0o700 });
       const items: StoredItem[] = batch.items.map((item) => {
-        if (!item.screenshot) return item as StoredItem;
-        const { data, ...meta } = item.screenshot;
-        const file = `${item.id}.${meta.mime === 'image/png' ? 'png' : 'jpg'}`;
-        writeFileSync(join(tmp, file), Buffer.from(data, 'base64'), { mode: 0o600 });
-        return { ...item, screenshot: { ...meta, file } };
+        const { screenshot, attachments, ...rest } = item;
+        const stored: StoredItem = { ...rest };
+        if (screenshot) {
+          const { data, ...meta } = screenshot;
+          const file = `${item.id}.${meta.mime === 'image/png' ? 'png' : 'jpg'}`;
+          writeFileSync(join(tmp, file), Buffer.from(data, 'base64'), { mode: 0o600 });
+          stored.screenshot = { ...meta, file };
+        }
+        if (attachments?.length) {
+          mkdirSync(join(tmp, ATTACHMENTS_DIR), { recursive: true, mode: 0o700 });
+          stored.attachments = attachments.map(({ data, ...meta }, i) => {
+            const file = `${ATTACHMENTS_DIR}/${item.id}-${i + 1}-${safeAttachmentName(meta.name)}`;
+            writeFileSync(join(tmp, file), Buffer.from(data, 'base64'), { mode: 0o600 });
+            return { ...meta, file };
+          });
+        }
+        return stored;
       });
       stored = { ...batch, items };
       state = { status: 'queued', receivedAt: at, updatedAt: at, history: [{ status: 'queued', at, sessionId }] };
@@ -236,6 +260,11 @@ export class QueueStore {
   screenshotBase64(batchId: string, item: StoredItem): string | undefined {
     const path = this.screenshotPath(batchId, item);
     return path ? readFileSync(path).toString('base64') : undefined;
+  }
+
+  attachmentPath(batchId: string, attachment: StoredAttachment): string | undefined {
+    const path = join(this.batchDir(batchId), attachment.file);
+    return existsSync(path) ? path : undefined;
   }
 
   protected claimDir(batchId: string): string {

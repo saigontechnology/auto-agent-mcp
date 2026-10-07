@@ -1,5 +1,17 @@
 import { z } from 'zod';
-import { BATCH_SCHEMA, ID_PATTERN, LIMITS, MAX_FLOW_STEPS, MAX_ITEMS_PER_BATCH } from './constants.js';
+import {
+  attachmentMime,
+  ATTACHMENT_TYPES,
+  BATCH_SCHEMA,
+  ID_PATTERN,
+  LIMITS,
+  MAX_ATTACHMENTS_PER_ITEM,
+  MAX_ATTACHMENT_BYTES,
+  MAX_BATCH_ATTACHMENT_BYTES,
+  MAX_FLOW_STEPS,
+  MAX_ITEMS_PER_BATCH,
+  base64Size,
+} from './constants.js';
 
 export const idSchema = z.string().regex(ID_PATTERN);
 const timestamp = z.string().min(1).max(64);
@@ -55,6 +67,25 @@ export const screenshotSchema = z.object({
   clipped: z.boolean(),
 });
 
+const attachmentMimes = [...new Set(Object.values(ATTACHMENT_TYPES))] as [string, ...string[]];
+
+export const attachmentSchema = z
+  .object({
+    id: idSchema,
+    name: z.string().min(1).max(255),
+    mime: z.enum(attachmentMimes),
+    size: z.number().int().positive().max(MAX_ATTACHMENT_BYTES),
+    data: base64.max(Math.ceil(MAX_ATTACHMENT_BYTES / 3) * 4),
+  })
+  .superRefine((file, ctx) => {
+    if (attachmentMime(file.name) !== file.mime) {
+      ctx.addIssue({ code: 'custom', path: ['name'], message: `The name of "${file.name}" does not match its type ${file.mime}.` });
+    }
+    if (base64Size(file.data) !== file.size) {
+      ctx.addIssue({ code: 'custom', path: ['size'], message: `The data of "${file.name}" is not ${file.size} bytes.` });
+    }
+  });
+
 export const flowActionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('click'), anchor: anchorSchema }),
   z.object({ type: z.literal('input'), anchor: anchorSchema, value: z.string().max(5000), masked: z.boolean() }),
@@ -97,13 +128,14 @@ export const flowSchema = z.object({
 export const itemSchema = z
   .object({
     id: idSchema,
-    kind: z.enum(['element', 'text-edit', 'page', 'flow']),
+    kind: z.enum(['element', 'text-edit', 'page', 'flow', 'file']),
     comment: z.string().trim().min(1).max(4000),
     page: pageRefSchema,
     anchor: anchorSchema.optional(),
     textEdit: z.object({ before: z.string().max(4000), after: z.string().max(4000) }).optional(),
     flow: flowSchema.optional(),
     screenshot: screenshotSchema.optional(),
+    attachments: z.array(attachmentSchema).max(MAX_ATTACHMENTS_PER_ITEM).optional(),
     createdAt: timestamp,
   })
   .superRefine((item, ctx) => {
@@ -115,6 +147,9 @@ export const itemSchema = z
     }
     if (item.kind === 'flow' && !item.flow) {
       ctx.addIssue({ code: 'custom', path: ['flow'], message: 'A flow item needs flow.' });
+    }
+    if (item.kind === 'file' && !item.attachments?.length) {
+      ctx.addIssue({ code: 'custom', path: ['attachments'], message: 'A file item needs at least one attachment.' });
     }
   });
 
@@ -135,6 +170,10 @@ export const batchSchema = z
         ctx.addIssue({ code: 'custom', path: ['items', i, 'id'], message: `Duplicate item id "${item.id}".` });
       }
       seen.add(item.id);
+    }
+    const total = batch.items.reduce((sum, item) => sum + (item.attachments ?? []).reduce((s, f) => s + f.size, 0), 0);
+    if (total > MAX_BATCH_ATTACHMENT_BYTES) {
+      ctx.addIssue({ code: 'custom', path: ['items'], message: 'The attached files total more than 10 MB.' });
     }
   });
 
@@ -165,6 +204,7 @@ export type Viewport = z.infer<typeof viewportSchema>;
 export type SourceHint = z.infer<typeof sourceHintSchema>;
 export type Anchor = z.infer<typeof anchorSchema>;
 export type Screenshot = z.infer<typeof screenshotSchema>;
+export type Attachment = z.infer<typeof attachmentSchema>;
 export type FlowAction = z.infer<typeof flowActionSchema>;
 export type FlowStep = z.infer<typeof flowStepSchema>;
 export type Flow = z.infer<typeof flowSchema>;

@@ -6,7 +6,10 @@ import { makeBatch } from '../packages/protocol/test/fixtures.js';
 const record = (path: string): BatchRecord => {
   const batch = makeBatch({ page: { url: `http://localhost:5173${path}`, path, title: 'x' } });
   return {
-    batch: { ...batch, items: batch.items.map(({ screenshot: _s, ...item }) => item) },
+    batch: {
+      ...batch,
+      items: batch.items.map(({ screenshot: _s, attachments: _a, ...item }) => item as any),
+    },
     state: { status: 'queued', receivedAt: 't', updatedAt: 't', history: [] },
   };
 };

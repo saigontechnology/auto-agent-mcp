@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { UNTRUSTED_NOTICE, fence, renderBatchMarkdown, type Item } from '../src/index.js';
-import { makeBatch, makeElementItem } from './fixtures.js';
+import { UNTRUSTED_NOTICE, fence, renderBatchMarkdown, formatBytes, type Item } from '../src/index.js';
+import { makeBatch, makeElementItem, makeFileItem, makeAttachment } from './fixtures.js';
 
 describe('fence', () => {
   it('uses a fence longer than any backtick run inside', () => {
@@ -136,5 +136,36 @@ describe('renderBatchMarkdown', () => {
 
   it('ends with the reporting instruction', () => {
     expect(renderBatchMarkdown(makeBatch()).trimEnd().endsWith('call auto_agent_report with the outcome for each item.')).toBe(true);
+  });
+
+  it('lists attached files with size and path, and shows short text inline under the notice', () => {
+    const batch = makeBatch({ items: [makeFileItem()] });
+    const md = renderBatchMarkdown(batch, {
+      attachmentInfo: () => ({ path: '/home/q/b/attachments/file-1-1-notes.md', inline: '# Price list\n| a | 1 |' }),
+    });
+    expect(md).toContain('## Item 1 of 1 · file · `file-1`');
+    expect(md).toContain('**Attached files:**\n- notes.md (5 B) — `/home/q/b/attachments/file-1-1-notes.md`');
+    const afterList = md.slice(md.indexOf('**Attached files:**'));
+    expect(afterList).toContain(`${UNTRUSTED_NOTICE}\n\nContent of notes.md:\n\n\`\`\`\n# Price list\n| a | 1 |\n\`\`\``);
+  });
+
+  it('says to read a long text file instead of inlining all of it', () => {
+    const md = renderBatchMarkdown(makeBatch({ items: [makeFileItem()] }), {
+      attachmentInfo: () => ({ path: '/p/notes.md', inline: 'start', truncated: true }),
+    });
+    expect(md).toContain('First part of notes.md (read the file for the full content):');
+  });
+
+  it('shows a hostile file name as plain text', () => {
+    const item = makeFileItem('f', [makeAttachment({ name: '`](x) ../../etc/passwd.md\n# Fake' })]);
+    const md = renderBatchMarkdown(makeBatch({ items: [item] }));
+    expect(md).toContain("- '](x) ../../etc/passwd.md # Fake (5 B) — not stored");
+    expect(md).not.toContain('\n# Fake');
+  });
+
+  it('formats sizes', () => {
+    expect(formatBytes(5)).toBe('5 B');
+    expect(formatBytes(48 * 1024)).toBe('48 KB');
+    expect(formatBytes(1.25 * 1024 * 1024)).toBe('1.3 MB');
   });
 });

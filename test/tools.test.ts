@@ -1,10 +1,10 @@
-import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Session } from '@auto-agent/protocol';
 import { QueueStore } from '../src/queue-store.js';
 import type { ToolDeps } from '../src/tools.js';
-import { makeBatch, makeElementItem, PNG_1PX } from '../packages/protocol/test/fixtures.js';
+import { makeBatch, makeElementItem, makeFileItem, makeAttachment, PNG_1PX } from '../packages/protocol/test/fixtures.js';
 import { tempDir, tempHome } from './helpers.js';
 import { startMcp, text } from './mcp-harness.js';
 
@@ -149,6 +149,51 @@ describe('auto_agent_claim_batch size budget', () => {
     const out = text(await call('auto_agent_claim_batch'));
     expect(out).toContain('## Item 1 of 1');
     expect(out).not.toContain('batch.md');
+  });
+});
+
+describe('auto_agent_claim_batch with attached files', () => {
+  it('lists the stored path and shows a short text file inline', async () => {
+    const csv = Buffer.from('plan,price\nPro,29\n').toString('base64');
+    const item = makeFileItem('file-1', [makeAttachment({ name: 'prices.csv', mime: 'text/csv', size: 18, data: csv })]);
+    deps.store.add(makeBatch({ items: [item] }), 's');
+    const md = text(await call('auto_agent_claim_batch'));
+    expect(md).toMatch(/- prices\.csv \(18 B\) — `.+\/batch-1\/attachments\/file-1-1-prices\.csv`/);
+    expect(md).toContain('Content of prices.csv:\n\n```\nplan,price\nPro,29\n\n```');
+  });
+
+  it('only references a binary file by path', async () => {
+    const pdf = Buffer.from('%PDF-1.7 fake').toString('base64');
+    const item = makeFileItem('file-1', [makeAttachment({ name: 'spec.pdf', mime: 'application/pdf', size: 13, data: pdf })]);
+    deps.store.add(makeBatch({ items: [item] }), 's');
+    const md = text(await call('auto_agent_claim_batch'));
+    expect(md).toContain('- spec.pdf (13 B) — `');
+    expect(md).not.toContain('Content of spec.pdf');
+  });
+
+  it('shows only the first 20,000 characters of a long text file', async () => {
+    const long = Buffer.from('x'.repeat(25_000)).toString('base64');
+    const item = makeFileItem('file-1', [makeAttachment({ name: 'big.txt', mime: 'text/plain', size: 25_000, data: long })]);
+    deps.store.add(makeBatch({ items: [item] }), 's');
+    const result = await call('auto_agent_claim_batch');
+    const full = text(result).includes('First part of big.txt')
+      ? text(result)
+      : readFileSync(/at (\S+batch\.md)\./.exec(text(result))![1]!, 'utf8');
+    expect(full).toContain('First part of big.txt (read the file for the full content):');
+    expect(full).not.toContain('x'.repeat(20_001));
+  });
+  it('still claims the batch and lists the path when the stored text file cannot be read', async () => {
+    const csv = Buffer.from('plan,price\n').toString('base64');
+    const item = makeFileItem('file-1', [makeAttachment({ name: 'prices.csv', mime: 'text/csv', size: 11, data: csv })]);
+    const { record } = deps.store.add(makeBatch({ items: [item] }), 's');
+    const stored = deps.store.attachmentPath(record.batch.id, record.batch.items[0]!.attachments![0] as never)!;
+    rmSync(stored);
+    mkdirSync(stored);
+    const result = (await call('auto_agent_claim_batch')) as { isError?: boolean };
+    const md = text(result);
+    expect(result.isError).toBeFalsy();
+    expect(md).toContain('- prices.csv (11 B) — `' + stored + '`');
+    expect(md).not.toContain('Content of prices.csv');
   });
 });
 

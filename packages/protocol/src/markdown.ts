@@ -1,8 +1,14 @@
 import { UNTRUSTED_NOTICE } from './constants.js';
-import type { Batch, FlowStep, Item, SourceHint } from './schemas.js';
+import type { Attachment, Batch, FlowStep, Item, SourceHint } from './schemas.js';
 
-/** An item whose screenshot may be stored elsewhere; only its presence matters here. */
-export type RenderableItem = Omit<Item, 'screenshot'> & { screenshot?: object };
+/** An attachment whose bytes may be stored elsewhere; only its metadata is rendered. */
+export type RenderableAttachment = { id: string; name: string; mime: string; size: number };
+
+/** An item whose screenshot and files may be stored elsewhere; only their metadata matters here. */
+export type RenderableItem = Omit<Item, 'screenshot' | 'attachments'> & {
+  screenshot?: object;
+  attachments?: RenderableAttachment[];
+};
 export type RenderableBatch = Omit<Batch, 'items'> & { items: RenderableItem[] };
 
 export type RenderOptions = {
@@ -12,6 +18,8 @@ export type RenderOptions = {
   resolveSource?: (hint: SourceHint) => { path: string; found: boolean } | undefined;
   /** How the item's screenshot reaches the reader, e.g. "attached as image 1". */
   screenshotLabel?(item: RenderableItem, index: number): string | undefined;
+  /** Where an attached file is stored, and its text when it is short enough to show inline. */
+  attachmentInfo?(item: RenderableItem, attachment: RenderableAttachment): { path?: string; inline?: string; truncated?: boolean } | undefined;
 };
 
 /** Slices can split a surrogate pair; the model API rejects unpaired surrogates. */
@@ -47,6 +55,12 @@ function quote(text: string): string {
 
 function plural(n: number, word: string): string {
   return `${n} ${word}${n === 1 ? '' : 's'}`;
+}
+
+export function formatBytes(n: number): string {
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${Math.round(n / 1024)} KB`;
+  return `${(n / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function sourceLines(hint: SourceHint, options: RenderOptions): string[] {
@@ -115,9 +129,28 @@ function pageData(item: RenderableItem): string {
   return out;
 }
 
+function attachmentsSection(item: RenderableItem, options: RenderOptions): string | undefined {
+  if (!item.attachments?.length) return undefined;
+  const list: string[] = [];
+  const inlined: string[] = [];
+  for (const file of item.attachments) {
+    const info = options.attachmentInfo?.(item, file);
+    const name = inline(file.name, 255);
+    list.push(`- ${name} (${formatBytes(file.size)}) — ${info?.path ? `\`${inline(info.path, 1000)}\`` : 'not stored'}`);
+    if (info?.inline !== undefined) {
+      const heading = info.truncated ? `First part of ${name} (read the file for the full content):` : `Content of ${name}:`;
+      inlined.push(`${heading}\n\n${fence(info.inline)}`);
+    }
+  }
+  const parts = [`**Attached files:**\n${list.join('\n')}`];
+  if (inlined.length > 0) parts.push(`${UNTRUSTED_NOTICE}\n\n${inlined.join('\n\n')}`);
+  return parts.join('\n\n');
+}
+
 function renderItem(item: RenderableItem, index: number, total: number, options: RenderOptions): string {
   const parts: string[] = [`## Item ${index + 1} of ${total} · ${item.kind} · \`${item.id}\``];
-  parts.push(`**${item.kind === 'flow' ? 'Workflow title' : "Reviewer's request"}:**\n${quote(item.comment)}`);
+  const label = item.kind === 'flow' ? 'Workflow title' : item.kind === 'file' ? "Reviewer's note about the files" : "Reviewer's request";
+  parts.push(`**${label}:**\n${quote(item.comment)}`);
   if (item.textEdit) parts.push(`**Requested text (after):**\n${quote(item.textEdit.after)}`);
   if (item.flow) {
     if (item.flow.expected) parts.push(`**Expected:**\n${quote(item.flow.expected)}`);
@@ -130,6 +163,8 @@ function renderItem(item: RenderableItem, index: number, total: number, options:
     const label = options.screenshotLabel?.(item, index) ?? 'included in the batch file';
     parts.push(`**Screenshot:** ${label}`);
   }
+  const files = attachmentsSection(item, options);
+  if (files) parts.push(files);
   parts.push(`${UNTRUSTED_NOTICE}\n\n${pageData(item)}`);
   return parts.join('\n\n');
 }

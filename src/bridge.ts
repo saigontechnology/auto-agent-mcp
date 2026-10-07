@@ -2,6 +2,7 @@ import { createServer } from 'node:http';
 import { WebSocket, WebSocketServer, type RawData } from 'ws';
 import {
   APP_ID,
+  FEATURE_ATTACHMENTS,
   MAX_MESSAGE_BYTES,
   PORTS,
   PROTOCOL_VERSION,
@@ -134,7 +135,14 @@ export async function startBridge(deps: BridgeDeps, ports: readonly number[] = P
         fail(conn, 'internal', 'The server could not handle that message.');
       }
     });
-    send(conn, { v: 1, type: 'server.info', app: APP_ID, protocol: PROTOCOL_VERSION, serverVersion: deps.serverVersion });
+    send(conn, {
+      v: 1,
+      type: 'server.info',
+      app: APP_ID,
+      protocol: PROTOCOL_VERSION,
+      serverVersion: deps.serverVersion,
+      features: [FEATURE_ATTACHMENTS],
+    });
   }
 
   function onMessage(conn: Connection, buffer: Buffer): void {
