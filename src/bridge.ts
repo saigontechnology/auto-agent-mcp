@@ -3,6 +3,7 @@ import { WebSocket, WebSocketServer, type RawData } from 'ws';
 import {
   APP_ID,
   FEATURE_ATTACHMENTS,
+  FEATURE_STYLE_EDIT,
   MAX_MESSAGE_BYTES,
   PORTS,
   PROTOCOL_VERSION,
@@ -141,7 +142,7 @@ export async function startBridge(deps: BridgeDeps, ports: readonly number[] = P
       app: APP_ID,
       protocol: PROTOCOL_VERSION,
       serverVersion: deps.serverVersion,
-      features: [FEATURE_ATTACHMENTS],
+      features: [FEATURE_ATTACHMENTS, FEATURE_STYLE_EDIT],
     });
   }
 

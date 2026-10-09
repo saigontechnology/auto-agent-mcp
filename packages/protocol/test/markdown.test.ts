@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { UNTRUSTED_NOTICE, fence, renderBatchMarkdown, formatBytes, type Item } from '../src/index.js';
-import { makeBatch, makeElementItem, makeFileItem, makeAttachment } from './fixtures.js';
+import { makeBatch, makeElementItem, makeFileItem, makeAttachment, makeStyleEditItem } from './fixtures.js';
 
 describe('fence', () => {
   it('uses a fence longer than any backtick run inside', () => {
@@ -167,5 +167,29 @@ describe('renderBatchMarkdown', () => {
     expect(formatBytes(5)).toBe('5 B');
     expect(formatBytes(48 * 1024)).toBe('48 KB');
     expect(formatBytes(1.25 * 1024 * 1024)).toBe('1.3 MB');
+  });
+
+  it('lists style changes with scope, values and tokens', () => {
+    const md = renderBatchMarkdown(makeBatch({ items: [makeStyleEditItem()] }));
+    expect(md).toContain('## Item 1 of 1 · style-edit · `style-1`');
+    expect(md).toContain('**Requested style changes (all 12 instances of component `Button`):**');
+    expect(md).toContain('- `padding-top`: 12px (token space-3) → 16px (token space-4)');
+    expect(md).toContain('- `background-color`: rgb(124, 58, 237) (token --color-primary-600) → rgb(109, 40, 217) (token --color-primary-700)');
+  });
+
+  it('says "this element only" for instance scope and drops backticks from page values', () => {
+    const item = makeStyleEditItem();
+    item.styleEdit = {
+      scope: 'instance',
+      instanceCount: 1,
+      changes: [{ property: 'color', before: { value: 'red`x' }, after: { value: 'blue' } }],
+    };
+    const md = renderBatchMarkdown(makeBatch({ items: [item] }));
+    expect(md).toContain('**Requested style changes (this element only):**');
+    expect(md).toContain("- `color`: red'x → blue");
+  });
+
+  it('renders element items exactly as before', () => {
+    expect(renderBatchMarkdown(makeBatch())).not.toContain('Requested style changes');
   });
 });
