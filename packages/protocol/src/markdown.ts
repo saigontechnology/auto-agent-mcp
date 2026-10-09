@@ -1,5 +1,5 @@
 import { UNTRUSTED_NOTICE } from './constants.js';
-import type { Attachment, Batch, FlowStep, Item, SourceHint } from './schemas.js';
+import type { Attachment, Batch, FlowStep, Item, SourceHint, StyleEdit } from './schemas.js';
 
 /** An attachment whose bytes may be stored elsewhere; only its metadata is rendered. */
 export type RenderableAttachment = { id: string; name: string; mime: string; size: number };
@@ -117,6 +117,7 @@ function pageData(item: RenderableItem): string {
     }
   }
   if (item.textEdit) lines.push(`Text before the edit: ${item.textEdit.before}`);
+  if (item.styleEdit) lines.push(...styleEditPageLines(item.styleEdit));
   if (item.flow) {
     lines.push('Steps:');
     item.flow.steps.forEach((step, i) => {
@@ -147,11 +148,32 @@ function attachmentsSection(item: RenderableItem, options: RenderOptions): strin
   return parts.join('\n\n');
 }
 
+/** Trusted part of a style edit: the scope and each property's requested value. Page-derived data stays out. */
+function styleEditSection(edit: StyleEdit, component: string | undefined): string {
+  const target = component && COMPONENT_NAME.test(component) ? `component \`${component}\`` : 'the component';
+  const count = edit.instanceCount === 1 ? plural(1, 'instance') : `all ${plural(edit.instanceCount, 'instance')}`;
+  const scope = edit.scope === 'component' ? `${count} of ${target}` : 'this element only';
+  const lines = edit.changes.map((c) => `- \`${c.property}\` → ${inline(c.after.value, 200)}`);
+  return `**Requested style changes (${scope}):**\n${lines.join('\n')}`;
+}
+
+/** Page-derived part of a style edit (before values and token names), rendered inside the untrusted block. */
+function styleEditPageLines(edit: StyleEdit): string[] {
+  return edit.changes.map((c) => {
+    const before = c.before.token
+      ? `${inline(c.before.value, 200)} (token ${inline(c.before.token, 200)})`
+      : inline(c.before.value, 200);
+    const after = c.after.token ? `token ${inline(c.after.token, 200)}` : 'no token';
+    return `Style before/after tokens: ${c.property}: ${before} → ${after}`;
+  });
+}
+
 function renderItem(item: RenderableItem, index: number, total: number, options: RenderOptions): string {
   const parts: string[] = [`## Item ${index + 1} of ${total} · ${item.kind} · \`${item.id}\``];
   const label = item.kind === 'flow' ? 'Workflow title' : item.kind === 'file' ? "Reviewer's note about the files" : "Reviewer's request";
   parts.push(`**${label}:**\n${quote(item.comment)}`);
   if (item.textEdit) parts.push(`**Requested text (after):**\n${quote(item.textEdit.after)}`);
+  if (item.styleEdit) parts.push(styleEditSection(item.styleEdit, item.anchor?.source.component));
   if (item.flow) {
     if (item.flow.expected) parts.push(`**Expected:**\n${quote(item.flow.expected)}`);
     if (item.flow.actual) parts.push(`**Actual:**\n${quote(item.flow.actual)}`);

@@ -41,6 +41,56 @@ var ID_PATTERN = /^[A-Za-z0-9_-]{1,100}$/;
 var MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
 var MAX_BATCH_ATTACHMENT_BYTES = 10 * 1024 * 1024;
 var MAX_ATTACHMENTS_PER_ITEM = 5;
+var STYLE_PROPERTIES = [
+  // Auto layout
+  "display",
+  "flex-direction",
+  "flex-wrap",
+  "gap",
+  "row-gap",
+  "column-gap",
+  "align-items",
+  "justify-content",
+  "width",
+  "height",
+  "min-width",
+  "max-width",
+  // Spacing
+  "padding-top",
+  "padding-right",
+  "padding-bottom",
+  "padding-left",
+  "margin-top",
+  "margin-right",
+  "margin-bottom",
+  "margin-left",
+  // Typography
+  "font-family",
+  "font-weight",
+  "font-size",
+  "line-height",
+  "letter-spacing",
+  "text-align",
+  "color",
+  // Fill
+  "background-color",
+  // Border & radius
+  "border-top-left-radius",
+  "border-top-right-radius",
+  "border-bottom-right-radius",
+  "border-bottom-left-radius",
+  "border-width",
+  "border-style",
+  "border-color",
+  // Effects
+  "box-shadow",
+  "opacity",
+  // Size intent (hug / fill / fixed) for flex children
+  "flex-grow"
+];
+var MAX_STYLE_CHANGES = 60;
+var TOKEN_KINDS = ["color", "space", "radius", "font-size", "font-weight", "line-height", "shadow"];
+var MAX_TOKENS = 2e3;
 var ATTACHMENT_TYPES = {
   pdf: "application/pdf",
   doc: "application/msword",
@@ -19840,19 +19890,40 @@ var flowSchema = external_exports.object({
   endedAt: timestamp,
   steps: external_exports.array(flowStepSchema).max(MAX_FLOW_STEPS)
 });
+var styleValueSchema = external_exports.object({
+  value: external_exports.string().max(500),
+  token: external_exports.string().max(200).optional()
+});
+var styleChangeSchema = external_exports.object({
+  property: external_exports.enum(STYLE_PROPERTIES),
+  before: styleValueSchema,
+  after: styleValueSchema
+});
+var styleEditSchema = external_exports.object({
+  scope: external_exports.enum(["instance", "component"]),
+  instanceCount: external_exports.number().int().positive(),
+  changes: external_exports.array(styleChangeSchema).min(1).max(MAX_STYLE_CHANGES)
+});
+var designTokenSchema = external_exports.object({
+  name: external_exports.string().min(1).max(200),
+  kind: external_exports.enum(TOKEN_KINDS),
+  value: external_exports.string().max(500)
+});
+var designTokensSchema = external_exports.array(designTokenSchema).max(MAX_TOKENS);
 var itemSchema = external_exports.object({
   id: idSchema,
-  kind: external_exports.enum(["element", "text-edit", "page", "flow", "file"]),
+  kind: external_exports.enum(["element", "text-edit", "page", "flow", "file", "style-edit"]),
   comment: external_exports.string().trim().min(1).max(4e3),
   page: pageRefSchema,
   anchor: anchorSchema.optional(),
   textEdit: external_exports.object({ before: external_exports.string().max(4e3), after: external_exports.string().max(4e3) }).optional(),
   flow: flowSchema.optional(),
+  styleEdit: styleEditSchema.optional(),
   screenshot: screenshotSchema.optional(),
   attachments: external_exports.array(attachmentSchema).max(MAX_ATTACHMENTS_PER_ITEM).optional(),
   createdAt: timestamp
 }).superRefine((item, ctx) => {
-  if ((item.kind === "element" || item.kind === "text-edit") && !item.anchor) {
+  if ((item.kind === "element" || item.kind === "text-edit" || item.kind === "style-edit") && !item.anchor) {
     ctx.addIssue({ code: "custom", path: ["anchor"], message: `A ${item.kind} item needs an anchor.` });
   }
   if (item.kind === "text-edit" && !item.textEdit) {
@@ -19863,6 +19934,12 @@ var itemSchema = external_exports.object({
   }
   if (item.kind === "file" && !item.attachments?.length) {
     ctx.addIssue({ code: "custom", path: ["attachments"], message: "A file item needs at least one attachment." });
+  }
+  if (item.kind === "style-edit" && !item.styleEdit) {
+    ctx.addIssue({ code: "custom", path: ["styleEdit"], message: "A style-edit item needs styleEdit." });
+  }
+  if (item.styleEdit?.scope === "component" && !item.anchor?.source.component) {
+    ctx.addIssue({ code: "custom", path: ["styleEdit", "scope"], message: "Component scope needs the component name in anchor.source." });
   }
 });
 var batchSchema = external_exports.object({
@@ -19950,6 +20027,7 @@ var serverMessageSchema = external_exports.discriminatedUnion("type", [
     report: batchReportSchema.optional(),
     updatedAt: timestamp2
   }),
+  external_exports.object({ v, type: external_exports.literal("tokens"), source: external_exports.literal("tailwind-v3"), tokens: designTokensSchema }),
   external_exports.object({ v, type: external_exports.literal("pong") }),
   external_exports.object({ v, type: external_exports.literal("error"), code: errorCodeSchema, requestId: idSchema.optional(), message: external_exports.string().max(2e3) })
 ]);

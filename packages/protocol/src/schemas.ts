@@ -10,6 +10,10 @@ import {
   MAX_BATCH_ATTACHMENT_BYTES,
   MAX_FLOW_STEPS,
   MAX_ITEMS_PER_BATCH,
+  MAX_STYLE_CHANGES,
+  MAX_TOKENS,
+  STYLE_PROPERTIES,
+  TOKEN_KINDS,
   base64Size,
 } from './constants.js';
 
@@ -125,21 +129,47 @@ export const flowSchema = z.object({
   steps: z.array(flowStepSchema).max(MAX_FLOW_STEPS),
 });
 
+export const styleValueSchema = z.object({
+  value: z.string().max(500),
+  token: z.string().max(200).optional(),
+});
+
+export const styleChangeSchema = z.object({
+  property: z.enum(STYLE_PROPERTIES),
+  before: styleValueSchema,
+  after: styleValueSchema,
+});
+
+export const styleEditSchema = z.object({
+  scope: z.enum(['instance', 'component']),
+  instanceCount: z.number().int().positive(),
+  changes: z.array(styleChangeSchema).min(1).max(MAX_STYLE_CHANGES),
+});
+
+export const designTokenSchema = z.object({
+  name: z.string().min(1).max(200),
+  kind: z.enum(TOKEN_KINDS),
+  value: z.string().max(500),
+});
+
+export const designTokensSchema = z.array(designTokenSchema).max(MAX_TOKENS);
+
 export const itemSchema = z
   .object({
     id: idSchema,
-    kind: z.enum(['element', 'text-edit', 'page', 'flow', 'file']),
+    kind: z.enum(['element', 'text-edit', 'page', 'flow', 'file', 'style-edit']),
     comment: z.string().trim().min(1).max(4000),
     page: pageRefSchema,
     anchor: anchorSchema.optional(),
     textEdit: z.object({ before: z.string().max(4000), after: z.string().max(4000) }).optional(),
     flow: flowSchema.optional(),
+    styleEdit: styleEditSchema.optional(),
     screenshot: screenshotSchema.optional(),
     attachments: z.array(attachmentSchema).max(MAX_ATTACHMENTS_PER_ITEM).optional(),
     createdAt: timestamp,
   })
   .superRefine((item, ctx) => {
-    if ((item.kind === 'element' || item.kind === 'text-edit') && !item.anchor) {
+    if ((item.kind === 'element' || item.kind === 'text-edit' || item.kind === 'style-edit') && !item.anchor) {
       ctx.addIssue({ code: 'custom', path: ['anchor'], message: `A ${item.kind} item needs an anchor.` });
     }
     if (item.kind === 'text-edit' && !item.textEdit) {
@@ -150,6 +180,12 @@ export const itemSchema = z
     }
     if (item.kind === 'file' && !item.attachments?.length) {
       ctx.addIssue({ code: 'custom', path: ['attachments'], message: 'A file item needs at least one attachment.' });
+    }
+    if (item.kind === 'style-edit' && !item.styleEdit) {
+      ctx.addIssue({ code: 'custom', path: ['styleEdit'], message: 'A style-edit item needs styleEdit.' });
+    }
+    if (item.styleEdit?.scope === 'component' && !item.anchor?.source.component) {
+      ctx.addIssue({ code: 'custom', path: ['styleEdit', 'scope'], message: 'Component scope needs the component name in anchor.source.' });
     }
   });
 
@@ -208,6 +244,12 @@ export type Attachment = z.infer<typeof attachmentSchema>;
 export type FlowAction = z.infer<typeof flowActionSchema>;
 export type FlowStep = z.infer<typeof flowStepSchema>;
 export type Flow = z.infer<typeof flowSchema>;
+export type StyleProperty = (typeof STYLE_PROPERTIES)[number];
+export type StyleValue = z.infer<typeof styleValueSchema>;
+export type StyleChange = z.infer<typeof styleChangeSchema>;
+export type StyleEdit = z.infer<typeof styleEditSchema>;
+export type TokenKind = (typeof TOKEN_KINDS)[number];
+export type DesignToken = z.infer<typeof designTokenSchema>;
 export type Item = z.infer<typeof itemSchema>;
 export type ItemKind = Item['kind'];
 export type Batch = z.infer<typeof batchSchema>;

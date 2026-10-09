@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { encodeMessage, parseClientMessage, parseServerMessage } from '../src/index.js';
+import { encodeMessage, parseClientMessage, parseServerMessage, MAX_TOKENS } from '../src/index.js';
 import { makeBatch } from './fixtures.js';
 
 describe('parseClientMessage', () => {
@@ -63,5 +63,21 @@ describe('parseServerMessage', () => {
     expect(withFeatures.ok && withFeatures.message.type === 'server.info' && withFeatures.message.features).toEqual(['attachments']);
     const older = parseServerMessage(JSON.stringify({ v: 1, type: 'server.info', app: 'auto-agent', protocol: 1, serverVersion: '0.1.0' }));
     expect(older.ok && older.message.type === 'server.info' && older.message.features).toBeUndefined();
+  });
+});
+
+describe('tokens message', () => {
+  const tokens = [{ name: 'primary-700', kind: 'color', value: '#6d28d9' }];
+
+  it('parses a tokens message', () => {
+    const result = parseServerMessage(JSON.stringify({ v: 1, type: 'tokens', source: 'tailwind-v3', tokens }));
+    expect(result.ok).toBe(true);
+  });
+
+  it('refuses an unknown token kind and too many tokens', () => {
+    const bad = JSON.stringify({ v: 1, type: 'tokens', source: 'tailwind-v3', tokens: [{ ...tokens[0], kind: 'z-index' }] });
+    expect(parseServerMessage(bad).ok).toBe(false);
+    const many = Array.from({ length: MAX_TOKENS + 1 }, () => tokens[0]);
+    expect(parseServerMessage(JSON.stringify({ v: 1, type: 'tokens', source: 'tailwind-v3', tokens: many })).ok).toBe(false);
   });
 });
