@@ -35,6 +35,37 @@ export const MAX_INLINE_ATTACHMENT_CHARS = 20_000;
 /** Announced in server.info by a plugin that stores attached files. */
 export const FEATURE_ATTACHMENTS = 'attachments';
 
+/** Announced in server.info by a plugin that understands style-edit items. */
+export const FEATURE_STYLE_EDIT = 'style-edit';
+
+/** CSS properties the design inspector can change, grouped as its sections are. */
+export const STYLE_PROPERTIES = [
+  // Auto layout
+  'display', 'flex-direction', 'flex-wrap', 'gap', 'row-gap', 'column-gap', 'align-items', 'justify-content',
+  'width', 'height', 'min-width', 'max-width',
+  // Spacing
+  'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
+  'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
+  // Typography
+  'font-family', 'font-weight', 'font-size', 'line-height', 'letter-spacing', 'text-align', 'color',
+  // Fill
+  'background-color',
+  // Border & radius
+  'border-top-left-radius', 'border-top-right-radius', 'border-bottom-right-radius', 'border-bottom-left-radius',
+  'border-width', 'border-style', 'border-color',
+  // Effects
+  'box-shadow', 'opacity',
+  // Size intent (hug / fill / fixed) for flex children
+  'flex-grow',
+] as const;
+
+export const MAX_STYLE_CHANGES = 60;
+
+export const TOKEN_KINDS = ['color', 'space', 'radius', 'font-size', 'font-weight', 'line-height', 'shadow'] as const;
+
+/** Most design tokens one tokens message may carry. */
+export const MAX_TOKENS = 2000;
+
 /** Document and image types a reviewer may attach: lower-case extension → the MIME type sent on. */
 export const ATTACHMENT_TYPES: Readonly<Record<string, string>> = {
   pdf: 'application/pdf',

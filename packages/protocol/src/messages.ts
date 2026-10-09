@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { APP_ID } from './constants.js';
-import { batchReportSchema, batchSchema, batchStatusSchema, idSchema, sessionSchema } from './schemas.js';
+import { batchReportSchema, batchSchema, batchStatusSchema, designTokensSchema, idSchema, sessionSchema } from './schemas.js';
 
 const v = z.literal(1);
 const timestamp = z.string().min(1).max(64);
@@ -49,6 +49,7 @@ export const serverMessageSchema = z.discriminatedUnion('type', [
     report: batchReportSchema.optional(),
     updatedAt: timestamp,
   }),
+  z.object({ v, type: z.literal('tokens'), source: z.literal('tailwind-v3'), tokens: designTokensSchema }),
   z.object({ v, type: z.literal('pong') }),
   z.object({ v, type: z.literal('error'), code: errorCodeSchema, requestId: idSchema.optional(), message: z.string().max(2000) }),
 ]);

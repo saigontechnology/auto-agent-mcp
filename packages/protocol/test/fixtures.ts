@@ -64,3 +64,20 @@ export function makeFileItem(id = 'file-1', attachments: Attachment[] = [makeAtt
     createdAt: '2026-10-06T10:00:00.000Z',
   };
 }
+
+export function makeStyleEditItem(id = 'style-1'): Item {
+  const { screenshot: _s, ...element } = makeElementItem(id);
+  return {
+    ...element,
+    kind: 'style-edit',
+    comment: 'Button (all 12 instances): padding-top space-3 → space-4',
+    styleEdit: {
+      scope: 'component',
+      instanceCount: 12,
+      changes: [
+        { property: 'padding-top', before: { value: '12px', token: 'space-3' }, after: { value: '16px', token: 'space-4' } },
+        { property: 'background-color', before: { value: 'rgb(124, 58, 237)', token: '--color-primary-600' }, after: { value: 'rgb(109, 40, 217)', token: '--color-primary-700' } },
+      ],
+    },
+  };
+}

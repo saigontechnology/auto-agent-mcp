@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { attachmentMime, batchReportSchema, batchSchema, base64Size, flowStepSchema, itemSchema, MAX_ATTACHMENTS_PER_ITEM } from '../src/index.js';
-import { makeBatch, makeAttachment, makeElementItem, makeFileItem } from './fixtures.js';
+import { attachmentMime, batchReportSchema, batchSchema, base64Size, flowStepSchema, itemSchema, MAX_ATTACHMENTS_PER_ITEM, STYLE_PROPERTIES, MAX_STYLE_CHANGES } from '../src/index.js';
+import { makeBatch, makeAttachment, makeElementItem, makeFileItem, makeStyleEditItem } from './fixtures.js';
 
 describe('batchSchema', () => {
   it('accepts a valid batch', () => {
@@ -132,5 +132,41 @@ describe('attachments', () => {
   it('measures decoded base64', () => {
     expect(base64Size('aGVsbG8=')).toBe(5);
     expect(base64Size('aGVsbG8h')).toBe(6);
+  });
+});
+
+describe('style-edit items', () => {
+  it('accepts a valid style-edit item', () => {
+    expect(itemSchema.safeParse(makeStyleEditItem()).success).toBe(true);
+  });
+
+  it('requires styleEdit and an anchor', () => {
+    const { styleEdit: _se, ...noEdit } = makeStyleEditItem();
+    expect(itemSchema.safeParse(noEdit).success).toBe(false);
+    const { anchor: _a, ...noAnchor } = makeStyleEditItem();
+    expect(itemSchema.safeParse(noAnchor).success).toBe(false);
+  });
+
+  it('requires a component name for component scope, not for instance scope', () => {
+    const item = makeStyleEditItem();
+    const source = { ...item.anchor!.source, component: undefined, componentChain: undefined };
+    const anchor = { ...item.anchor!, source };
+    expect(itemSchema.safeParse({ ...item, anchor }).success).toBe(false);
+    expect(itemSchema.safeParse({ ...item, anchor, styleEdit: { ...item.styleEdit!, scope: 'instance', instanceCount: 1 } }).success).toBe(true);
+  });
+
+  it('refuses unknown properties, zero changes and too many changes', () => {
+    const item = makeStyleEditItem();
+    const change = item.styleEdit!.changes[0]!;
+    const withChanges = (changes: unknown[]) => ({ ...item, styleEdit: { ...item.styleEdit!, changes } });
+    expect(itemSchema.safeParse(withChanges([{ ...change, property: 'behavior' }])).success).toBe(false);
+    expect(itemSchema.safeParse(withChanges([])).success).toBe(false);
+    expect(itemSchema.safeParse(withChanges(Array.from({ length: MAX_STYLE_CHANGES + 1 }, () => change))).success).toBe(false);
+  });
+
+  it('lists every inspector property once', () => {
+    expect(new Set(STYLE_PROPERTIES).size).toBe(STYLE_PROPERTIES.length);
+    expect(STYLE_PROPERTIES).toContain('border-top-left-radius');
+    expect(STYLE_PROPERTIES).toHaveLength(38);
   });
 });
