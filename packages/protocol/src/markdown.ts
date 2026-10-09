@@ -117,6 +117,7 @@ function pageData(item: RenderableItem): string {
     }
   }
   if (item.textEdit) lines.push(`Text before the edit: ${item.textEdit.before}`);
+  if (item.styleEdit) lines.push(...styleEditPageLines(item.styleEdit));
   if (item.flow) {
     lines.push('Steps:');
     item.flow.steps.forEach((step, i) => {
@@ -147,17 +148,24 @@ function attachmentsSection(item: RenderableItem, options: RenderOptions): strin
   return parts.join('\n\n');
 }
 
-function styleValue(v: { value: string; token?: string }): string {
-  const value = inline(v.value, 200);
-  return v.token ? `${value} (token ${inline(v.token, 200)})` : value;
+/** Trusted part of a style edit: the scope and each property's requested value. Page-derived data stays out. */
+function styleEditSection(edit: StyleEdit, component: string | undefined): string {
+  const target = component && COMPONENT_NAME.test(component) ? `component \`${component}\`` : 'the component';
+  const count = edit.instanceCount === 1 ? plural(1, 'instance') : `all ${plural(edit.instanceCount, 'instance')}`;
+  const scope = edit.scope === 'component' ? `${count} of ${target}` : 'this element only';
+  const lines = edit.changes.map((c) => `- \`${c.property}\` → ${inline(c.after.value, 200)}`);
+  return `**Requested style changes (${scope}):**\n${lines.join('\n')}`;
 }
 
-function styleEditSection(edit: StyleEdit, component: string | undefined): string {
-  const name = component && COMPONENT_NAME.test(component) ? component : 'the component';
-  const scope =
-    edit.scope === 'component' ? `all ${edit.instanceCount} instances of component \`${name}\`` : 'this element only';
-  const lines = edit.changes.map((c) => `- \`${c.property}\`: ${styleValue(c.before)} → ${styleValue(c.after)}`);
-  return `**Requested style changes (${scope}):**\n${lines.join('\n')}`;
+/** Page-derived part of a style edit (before values and token names), rendered inside the untrusted block. */
+function styleEditPageLines(edit: StyleEdit): string[] {
+  return edit.changes.map((c) => {
+    const before = c.before.token
+      ? `${inline(c.before.value, 200)} (token ${inline(c.before.token, 200)})`
+      : inline(c.before.value, 200);
+    const after = c.after.token ? `token ${inline(c.after.token, 200)}` : 'no token';
+    return `Style before/after tokens: ${c.property}: ${before} → ${after}`;
+  });
 }
 
 function renderItem(item: RenderableItem, index: number, total: number, options: RenderOptions): string {

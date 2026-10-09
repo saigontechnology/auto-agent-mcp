@@ -169,24 +169,55 @@ describe('renderBatchMarkdown', () => {
     expect(formatBytes(1.25 * 1024 * 1024)).toBe('1.3 MB');
   });
 
-  it('lists style changes with scope, values and tokens', () => {
+  it('lists requested style changes with scope and after values only', () => {
     const md = renderBatchMarkdown(makeBatch({ items: [makeStyleEditItem()] }));
     expect(md).toContain('## Item 1 of 1 · style-edit · `style-1`');
-    expect(md).toContain('**Requested style changes (all 12 instances of component `Button`):**');
-    expect(md).toContain('- `padding-top`: 12px (token space-3) → 16px (token space-4)');
-    expect(md).toContain('- `background-color`: rgb(124, 58, 237) (token --color-primary-600) → rgb(109, 40, 217) (token --color-primary-700)');
+    expect(md).toContain(
+      '**Requested style changes (all 12 instances of component `Button`):**\n- `padding-top` → 16px\n- `background-color` → rgb(109, 40, 217)\n',
+    );
   });
 
-  it('says "this element only" for instance scope and drops backticks from page values', () => {
+  it('puts before values and all token names in the untrusted page data only', () => {
+    const md = renderBatchMarkdown(makeBatch({ items: [makeStyleEditItem()] }));
+    const fenceStart = md.indexOf(UNTRUSTED_NOTICE);
+    const trusted = md.slice(md.indexOf('**Requested style changes'), fenceStart);
+    expect(fenceStart).toBeGreaterThan(-1);
+    for (const pageValue of ['space-3', 'space-4', '--color-primary-600', '--color-primary-700', '12px', 'rgb(124, 58, 237)', 'token']) {
+      expect(trusted).not.toContain(pageValue);
+      expect(md.slice(fenceStart)).toContain(pageValue);
+    }
+    expect(md).toContain('Style before/after tokens: padding-top: 12px (token space-3) → token space-4');
+    expect(md).toContain(
+      'Style before/after tokens: background-color: rgb(124, 58, 237) (token --color-primary-600) → token --color-primary-700',
+    );
+  });
+
+  it('says "this element only" for instance scope and replaces backticks in page values', () => {
     const item = makeStyleEditItem();
     item.styleEdit = {
       scope: 'instance',
       instanceCount: 1,
-      changes: [{ property: 'color', before: { value: 'red`x' }, after: { value: 'blue' } }],
+      changes: [{ property: 'color', before: { value: 'red`x' }, after: { value: 'bl`ue' } }],
     };
     const md = renderBatchMarkdown(makeBatch({ items: [item] }));
     expect(md).toContain('**Requested style changes (this element only):**');
-    expect(md).toContain("- `color`: red'x → blue");
+    expect(md).toContain("- `color` → bl'ue");
+    expect(md).toContain("Style before/after tokens: color: red'x → no token");
+  });
+
+  it('reads "1 instance" for a single-instance component scope', () => {
+    const item = makeStyleEditItem();
+    item.styleEdit = { ...item.styleEdit!, instanceCount: 1 };
+    const md = renderBatchMarkdown(makeBatch({ items: [item] }));
+    expect(md).toContain('**Requested style changes (1 instance of component `Button`):**');
+  });
+
+  it('falls back to "the component" when the component name is invalid', () => {
+    const item = makeStyleEditItem();
+    item.anchor!.source.component = 'Bad name`\n# injected';
+    const md = renderBatchMarkdown(makeBatch({ items: [item] }));
+    expect(md).toContain('**Requested style changes (all 12 instances of the component):**');
+    expect(md).not.toContain('# injected');
   });
 
   it('renders element items exactly as before', () => {
